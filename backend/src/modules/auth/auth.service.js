@@ -1,0 +1,63 @@
+const bcrypt = require('bcrypt');
+const ApiError = require('../../utils/ApiError');
+const userRepository = require('../user/user.repository');
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} = require('../../utils/token');
+
+const login = async (email, password) => {
+  const user = await userRepository.findByEmail(email, true);
+  if (!user) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  const payload = { id: user._id, role: user.role, instituteId: user.instituteId };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  await userRepository.updateRefreshToken(user._id, refreshToken);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      instituteId: user.instituteId,
+    },
+  };
+};
+
+const refreshAccessToken = async (token) => {
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(token);
+  } catch (err) {
+    throw new ApiError(401, 'Invalid or expired refresh token');
+  }
+
+  const user = await userRepository.findById(decoded.id, true);
+  if (!user || user.refreshToken !== token) {
+    throw new ApiError(401, 'Refresh token does not match');
+  }
+
+  const payload = { id: user._id, role: user.role, instituteId: user.instituteId };
+  const accessToken = generateAccessToken(payload);
+
+  return { accessToken };
+};
+
+const logout = async (userId) => {
+  await userRepository.updateRefreshToken(userId, null);
+};
+
+module.exports = { login, refreshAccessToken, logout };

@@ -4,6 +4,9 @@ import Dashboard from '../pages/dashboard/Dashboard';
 import CreateUser from '../pages/users/CreateUser';
 import InstituteList from '../pages/institutes/InstituteList';
 import CreateInstitute from '../pages/institutes/CreateInstitute';
+import BatchList from '../pages/batches/BatchList';
+import CreateBatch from '../pages/batches/CreateBatch';
+import BatchDetail from '../pages/batches/BatchDetail';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -37,12 +40,36 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/institutes/create"
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <CreateInstitute />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/batches"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <BatchList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/batches/create"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <CreateBatch />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/batches/:id"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <BatchDetail />
           </ProtectedRoute>
         }
       />

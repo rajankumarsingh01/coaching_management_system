@@ -27,6 +27,9 @@ const Navbar = () => {
             <Link to="/dashboard" className="text-sm hover:text-gray-300">
               Dashboard
             </Link>
+            <Link to="/batches" className="text-sm hover:text-gray-300">
+              Batches
+            </Link>
             <Link to="/users/create" className="text-sm hover:text-gray-300">
               Create User
             </Link>

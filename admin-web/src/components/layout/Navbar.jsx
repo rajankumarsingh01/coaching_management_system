@@ -33,6 +33,23 @@ const Navbar = () => {
             <Link to="/users/create" className="text-sm hover:text-gray-300">
               Create User
             </Link>
+            <Link to="/attendance/mark" className="text-sm hover:text-gray-300">
+              Mark Attendance
+            </Link>
+            <Link to="/attendance/report" className="text-sm hover:text-gray-300">
+              Attendance Report
+            </Link>
+          </>
+        )}
+
+        {user.role === 'teacher' && (
+          <>
+            <Link to="/attendance/mark" className="text-sm hover:text-gray-300">
+              Mark Attendance
+            </Link>
+            <Link to="/attendance/report" className="text-sm hover:text-gray-300">
+              Attendance Report
+            </Link>
           </>
         )}
       </div>

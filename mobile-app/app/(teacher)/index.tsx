@@ -1,9 +1,12 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { useBatch } from '../../src/context/BatchContext';
+import { useAuth } from '../../src/context/AuthContext';
 
 export default function TeacherHome() {
   const { batches, selectedBatch, setSelectedBatch, loading } = useBatch();
+  const { logout } = useAuth();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   if (loading) {
@@ -16,7 +19,12 @@ export default function TeacherHome() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Teacher Dashboard</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Teacher Dashboard</Text>
+        <TouchableOpacity onPress={logout}>
+          <Text style={styles.logout}>Logout</Text>
+        </TouchableOpacity>
+      </View>
 
       {batches.length === 0 ? (
         <Text style={styles.empty}>No batches assigned yet.</Text>
@@ -46,6 +54,15 @@ export default function TeacherHome() {
               )}
             />
           )}
+
+          {selectedBatch && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => router.push('/(teacher)/mark-attendance')}
+            >
+              <Text style={styles.actionButtonText}>Mark Attendance for {selectedBatch.name}</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>
@@ -54,8 +71,10 @@ export default function TeacherHome() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: 'bold' },
+  logout: { color: '#dc2626', fontWeight: '600' },
   empty: { color: '#9ca3af' },
   selector: {
     borderWidth: 1,
@@ -76,4 +95,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
+  actionButton: {
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  actionButtonText: { color: '#fff', fontWeight: '600' },
 });

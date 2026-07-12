@@ -8,8 +8,6 @@ const authMiddleware = require('../../middlewares/auth.middleware');
 const roleMiddleware = require('../../middlewares/role.middleware');
 const { ROLES } = require('../../config/constants');
 
-// Only a tenant ADMIN registers teacher/student/parent (super_admin bypasses automatically
-// via role.middleware, but super_admin creating users should go through /institutes instead)
 router.post(
   '/register',
   authMiddleware,
@@ -19,5 +17,16 @@ router.post(
 );
 
 router.get('/me', authMiddleware, userController.getMe);
+
+// used to populate dropdowns — e.g. GET /users?role=student
+router.get(
+  '/',
+  authMiddleware,
+  roleMiddleware(ROLES.ADMIN, ROLES.TEACHER),
+  userController.getUsersByRole
+);
+
+// parent viewing their own linked children
+router.get('/my-children', authMiddleware, roleMiddleware(ROLES.PARENT), userController.getMyChildren);
 
 module.exports = router;

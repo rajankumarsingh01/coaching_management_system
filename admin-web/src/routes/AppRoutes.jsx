@@ -7,6 +7,8 @@ import CreateInstitute from '../pages/institutes/CreateInstitute';
 import BatchList from '../pages/batches/BatchList';
 import CreateBatch from '../pages/batches/CreateBatch';
 import BatchDetail from '../pages/batches/BatchDetail';
+import MarkAttendance from '../pages/attendance/MarkAttendance';
+import AttendanceReport from '../pages/attendance/AttendanceReport';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -70,6 +72,23 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <BatchDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/attendance/mark"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <MarkAttendance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendance/report"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <AttendanceReport />
           </ProtectedRoute>
         }
       />

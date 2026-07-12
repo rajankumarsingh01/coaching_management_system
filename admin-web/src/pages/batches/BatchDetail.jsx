@@ -5,8 +5,10 @@ import axiosInstance from '../../api/axiosInstance';
 const BatchDetail = () => {
   const { id } = useParams();
   const [batch, setBatch] = useState(null);
-  const [studentId, setStudentId] = useState('');
-  const [teacherId, setTeacherId] = useState('');
+  const [allStudents, setAllStudents] = useState([]);
+  const [allTeachers, setAllTeachers] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -19,19 +21,40 @@ const BatchDetail = () => {
     }
   };
 
+  const fetchUserOptions = async () => {
+    try {
+      const [studentsRes, teachersRes] = await Promise.all([
+        axiosInstance.get('/users', { params: { role: 'student' } }),
+        axiosInstance.get('/users', { params: { role: 'teacher' } }),
+      ]);
+      setAllStudents(studentsRes.data.data);
+      setAllTeachers(teachersRes.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load users');
+    }
+  };
+
   useEffect(() => {
     fetchBatch();
+    fetchUserOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const alreadyAssignedStudentIds = new Set((batch?.studentIds || []).map((s) => s._id));
+  const alreadyAssignedTeacherIds = new Set((batch?.teacherIds || []).map((t) => t._id));
+
+  const availableStudents = allStudents.filter((s) => !alreadyAssignedStudentIds.has(s.id));
+  const availableTeachers = allTeachers.filter((t) => !alreadyAssignedTeacherIds.has(t.id));
+
   const handleAssignStudent = async (e) => {
     e.preventDefault();
+    if (!selectedStudentId) return;
     setMessage('');
     setError('');
     try {
-      await axiosInstance.post(`/batches/${id}/assign-student`, { userId: studentId });
+      await axiosInstance.post(`/batches/${id}/assign-student`, { userId: selectedStudentId });
       setMessage('Student assigned successfully');
-      setStudentId('');
+      setSelectedStudentId('');
       fetchBatch();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to assign student');
@@ -40,12 +63,13 @@ const BatchDetail = () => {
 
   const handleAssignTeacher = async (e) => {
     e.preventDefault();
+    if (!selectedTeacherId) return;
     setMessage('');
     setError('');
     try {
-      await axiosInstance.post(`/batches/${id}/assign-teacher`, { userId: teacherId });
+      await axiosInstance.post(`/batches/${id}/assign-teacher`, { userId: selectedTeacherId });
       setMessage('Teacher assigned successfully');
-      setTeacherId('');
+      setSelectedTeacherId('');
       fetchBatch();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to assign teacher');
@@ -69,19 +93,35 @@ const BatchDetail = () => {
             {batch.studentIds?.map((s) => (
               <li key={s._id}>{s.name} ({s.email})</li>
             ))}
+            {(!batch.studentIds || batch.studentIds.length === 0) && (
+              <li className="text-gray-400">No students assigned yet.</li>
+            )}
           </ul>
-          <form onSubmit={handleAssignStudent} className="flex gap-2">
-            <input
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              placeholder="Student User ID"
-              className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
-              required
-            />
-            <button type="submit" className="rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
-              Assign
-            </button>
-          </form>
+
+          {availableStudents.length > 0 ? (
+            <form onSubmit={handleAssignStudent} className="flex gap-2">
+              <select
+                value={selectedStudentId}
+                onChange={(e) => setSelectedStudentId(e.target.value)}
+                className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+                required
+              >
+                <option value="">Select a student...</option>
+                {availableStudents.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.email})
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className="rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
+                Assign
+              </button>
+            </form>
+          ) : (
+            <p className="text-xs text-gray-400">
+              No unassigned students available. Create one from "Create User".
+            </p>
+          )}
         </div>
 
         <div>
@@ -90,19 +130,35 @@ const BatchDetail = () => {
             {batch.teacherIds?.map((t) => (
               <li key={t._id}>{t.name} ({t.email})</li>
             ))}
+            {(!batch.teacherIds || batch.teacherIds.length === 0) && (
+              <li className="text-gray-400">No teachers assigned yet.</li>
+            )}
           </ul>
-          <form onSubmit={handleAssignTeacher} className="flex gap-2">
-            <input
-              value={teacherId}
-              onChange={(e) => setTeacherId(e.target.value)}
-              placeholder="Teacher User ID"
-              className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
-              required
-            />
-            <button type="submit" className="rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
-              Assign
-            </button>
-          </form>
+
+          {availableTeachers.length > 0 ? (
+            <form onSubmit={handleAssignTeacher} className="flex gap-2">
+              <select
+                value={selectedTeacherId}
+                onChange={(e) => setSelectedTeacherId(e.target.value)}
+                className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+                required
+              >
+                <option value="">Select a teacher...</option>
+                {availableTeachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.email})
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className="rounded bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
+                Assign
+              </button>
+            </form>
+          ) : (
+            <p className="text-xs text-gray-400">
+              No unassigned teachers available. Create one from "Create User".
+            </p>
+          )}
         </div>
       </div>
     </div>

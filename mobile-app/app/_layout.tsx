@@ -19,6 +19,9 @@ export default function RootLayout() {
   <Stack.Screen name="(teacher)/index" />
   <Stack.Screen name="(student)/index" />
   <Stack.Screen name="(parent)/index" />
+  <Stack.Screen name="(teacher)/mark-attendance" options={{ headerShown: true, title: 'Mark Attendance' }} />
+<Stack.Screen name="(student)/attendance" options={{ headerShown: true, title: 'Attendance History' }} />
+<Stack.Screen name="(parent)/child-attendance" options={{ headerShown: true, title: "Child's Attendance" }} />
 </Stack>
       </BatchProvider>
     </AuthProvider>

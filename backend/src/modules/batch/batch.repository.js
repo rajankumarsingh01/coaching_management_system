@@ -4,10 +4,16 @@ const create = (data) => Batch.create(data);
 
 const findById = (id) => Batch.findById(id);
 
-// filter always includes instituteId scoping (or {} for super_admin) passed in from the service layer
-const findAll = (filter = {}) => Batch.find(filter).populate('teacherIds', 'name email').populate('studentIds', 'name email');
+const findAll = (filter = {}) =>
+  Batch.find(filter).populate('teacherIds', 'name email').populate('studentIds', 'name email');
 
-const findByIdScoped = (id, filter = {}) => Batch.findOne({ _id: id, ...filter });
+// Fixed: was missing .populate() — mobile "Mark Attendance" and admin-web
+// "Batch Detail" screens both rely on this returning full student/teacher
+// objects (name, email), not just raw ObjectIds.
+const findByIdScoped = (id, filter = {}) =>
+  Batch.findOne({ _id: id, ...filter })
+    .populate('teacherIds', 'name email')
+    .populate('studentIds', 'name email');
 
 const updateById = (id, data) => Batch.findByIdAndUpdate(id, data, { new: true });
 
@@ -29,11 +35,6 @@ module.exports = {
   addStudent,
   addTeacher,
 };
-
-
-
-
-
 
 
 

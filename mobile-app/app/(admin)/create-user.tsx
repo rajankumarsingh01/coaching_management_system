@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,25 @@ import axiosInstance from '../../src/api/axiosInstance';
 
 const ROLES = ['teacher', 'student', 'parent'];
 
+type Parent = { id: string; name: string; email: string };
+
 export default function CreateUserScreen() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'teacher' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'teacher', parentId: '' });
+  const [parents, setParents] = useState<Parent[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const fetchParents = useCallback(async () => {
+    try {
+      const { data } = await axiosInstance.get('/users', { params: { role: 'parent' } });
+      setParents(data.data);
+    } catch (err) {
+      console.error('Failed to load parents', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchParents();
+  }, [fetchParents]);
 
   const handleChange = (key: string, value: string) => {
     setForm({ ...form, [key]: value });
@@ -24,10 +40,15 @@ export default function CreateUserScreen() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { data } = await axiosInstance.post('/users/register', form);
+      const payload: any = { ...form };
+      if (form.role !== 'student' || !form.parentId) {
+        delete payload.parentId;
+      }
+      const { data } = await axiosInstance.post('/users/register', payload);
       Alert.alert('Success', `${data.data.role} account created: ${data.data.name}`, [
         { text: 'OK', onPress: () => router.back() },
       ]);
+      fetchParents(); // refresh so a newly created parent is available next time
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to create user');
     } finally {
@@ -76,6 +97,38 @@ export default function CreateUserScreen() {
         ))}
       </View>
 
+      {form.role === 'student' && (
+        <>
+          <Text style={styles.label}>Link to Parent (optional)</Text>
+          <View style={styles.parentList}>
+            <TouchableOpacity
+              style={[styles.parentChip, form.parentId === '' && styles.parentChipActive]}
+              onPress={() => handleChange('parentId', '')}
+            >
+              <Text style={[styles.parentChipText, form.parentId === '' && styles.parentChipTextActive]}>
+                None
+              </Text>
+            </TouchableOpacity>
+            {parents.map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[styles.parentChip, form.parentId === p.id && styles.parentChipActive]}
+                onPress={() => handleChange('parentId', p.id)}
+              >
+                <Text
+                  style={[styles.parentChipText, form.parentId === p.id && styles.parentChipTextActive]}
+                >
+                  {p.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {parents.length === 0 && (
+            <Text style={styles.hint}>No parent accounts yet — create one first if needed.</Text>
+          )}
+        </>
+      )}
+
       <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create User'}</Text>
       </TouchableOpacity>
@@ -105,11 +158,24 @@ const styles = StyleSheet.create({
   roleChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
   roleChipText: { color: '#374151' },
   roleChipTextActive: { color: '#fff', fontWeight: '600' },
+  parentList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  parentChip: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  parentChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
+  parentChipText: { fontSize: 12, color: '#374151' },
+  parentChipTextActive: { color: '#fff', fontWeight: '600' },
+  hint: { fontSize: 12, color: '#9ca3af', marginBottom: 16 },
   button: {
     backgroundColor: '#2563eb',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
+    marginTop: 20,
   },
   buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

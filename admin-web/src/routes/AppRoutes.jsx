@@ -9,7 +9,11 @@ import CreateBatch from '../pages/batches/CreateBatch';
 import BatchDetail from '../pages/batches/BatchDetail';
 import MarkAttendance from '../pages/attendance/MarkAttendance';
 import AttendanceReport from '../pages/attendance/AttendanceReport';
+import FeeOverview from '../pages/fees/FeeOverview';
+import CreateFee from '../pages/fees/CreateFee';
+import BatchFees from '../pages/fees/BatchFees';
 import ProtectedRoute from '../components/common/ProtectedRoute';
+import BatchContent from '../pages/content/BatchContent';
 
 const AppRoutes = () => {
   return (
@@ -89,6 +93,40 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['admin', 'teacher']}>
             <AttendanceReport />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fees"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <FeeOverview />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/fees/create"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <CreateFee />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/fees/batch"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <BatchFees />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/content"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'teacher']}>
+            <BatchContent />
           </ProtectedRoute>
         }
       />

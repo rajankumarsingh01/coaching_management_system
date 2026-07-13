@@ -10,5 +10,8 @@ router.use('/users', require('../modules/user/user.routes'));
 router.use('/institutes', require('../modules/institute/institute.routes'));
 router.use('/batches', require('../modules/batch/batch.routes'));
 router.use('/attendance', require('../modules/attendance/attendance.routes'));
+router.use('/fees', require('../modules/fee/fee.routes'));
+router.use('/notes', require('../modules/notes/notes.routes'));
+router.use('/lectures', require('../modules/lecture/lecture.routes'));
 
 module.exports = router;

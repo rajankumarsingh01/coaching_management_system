@@ -22,6 +22,10 @@ export default function RootLayout() {
   <Stack.Screen name="(teacher)/mark-attendance" options={{ headerShown: true, title: 'Mark Attendance' }} />
 <Stack.Screen name="(student)/attendance" options={{ headerShown: true, title: 'Attendance History' }} />
 <Stack.Screen name="(parent)/child-attendance" options={{ headerShown: true, title: "Child's Attendance" }} />
+<Stack.Screen name="(student)/fees" options={{ headerShown: true, title: 'My Fees' }} />
+<Stack.Screen name="(parent)/child-fees" options={{ headerShown: true, title: "Child's Fees" }} />
+<Stack.Screen name="(student)/notes" options={{ headerShown: true, title: 'Notes' }} />
+<Stack.Screen name="(student)/lectures" options={{ headerShown: true, title: 'Lectures' }} />
 </Stack>
       </BatchProvider>
     </AuthProvider>

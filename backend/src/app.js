@@ -9,15 +9,31 @@ const errorMiddleware = require('./middlewares/error.middleware');
 const app = express();
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173"
-    ],
-    credentials: true,
-  })
-);
+
+// CORS config — credentials true hone ki wajah se origin '*' nahi chalega,
+// isliye specific origin(s) allow kar rahe hain
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.CLIENT_URL, // prod frontend URL (Vercel/Render wagera)
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
+// IMPORTANT: Razorpay webhook needs the raw request body (as a Buffer) to
+// verify its HMAC signature — this must be registered BEFORE express.json(),
+// and only for this specific path, so the rest of the app keeps using
+// normal parsed JSON.
+app.use('/api/v1/fees/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));

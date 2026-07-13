@@ -39,6 +39,19 @@ const Navbar = () => {
             <Link to="/attendance/report" className="text-sm hover:text-gray-300">
               Attendance Report
             </Link>
+
+            <Link to="/content" className="text-sm hover:text-gray-300">
+              Content
+            </Link>
+
+            <Link to="/fees" className="text-sm hover:text-gray-300">
+              Fees
+            </Link>
+
+            <Link to="/content" className="text-sm hover:text-gray-300">
+              Content
+            </Link>
+
           </>
         )}
 
@@ -49,6 +62,9 @@ const Navbar = () => {
             </Link>
             <Link to="/attendance/report" className="text-sm hover:text-gray-300">
               Attendance Report
+            </Link>
+            <Link to="/fees/batch" className="text-sm hover:text-gray-300">
+              Batch Fees
             </Link>
           </>
         )}

@@ -48,19 +48,32 @@ export default function ParentHome() {
             </Text>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() =>
-                router.push({
-                  pathname: '/(parent)/child-attendance',
-                  params: { studentId: item.id, studentName: item.name },
-                })
-              }
-            >
+            <View style={styles.card}>
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardSub}>{item.email}</Text>
-              <Text style={styles.cardAction}>View Attendance →</Text>
-            </TouchableOpacity>
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(parent)/child-attendance',
+                      params: { studentId: item.id, studentName: item.name },
+                    })
+                  }
+                >
+                  <Text style={styles.actionText}>Attendance →</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(parent)/child-fees',
+                      params: { studentId: item.id, studentName: item.name },
+                    })
+                  }
+                >
+                  <Text style={styles.actionText}>Fees →</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
         />
       )}
@@ -83,6 +96,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 16, fontWeight: '600' },
   cardSub: { fontSize: 13, color: '#6b7280' },
-  cardAction: { fontSize: 13, color: '#2563eb', marginTop: 6, fontWeight: '500' },
+  actionRow: { flexDirection: 'row', gap: 16, marginTop: 8 },
+  actionText: { fontSize: 13, color: '#2563eb', fontWeight: '500' },
   empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
 });

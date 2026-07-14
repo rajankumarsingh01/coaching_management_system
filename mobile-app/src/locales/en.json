@@ -1,0 +1,21 @@
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "attendance": "Attendance",
+    "fees": "Fees",
+    "notes": "Notes",
+    "lectures": "Lectures",
+    "tests": "Tests",
+    "homework": "Homework",
+    "calendar": "Calendar",
+    "achievements": "Achievements"
+  },
+  "auth": {
+    "loginTitle": "Login",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "loginButton": "Login"
+  }
+}

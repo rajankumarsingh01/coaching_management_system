@@ -7,10 +7,16 @@ const validate = require('../../middlewares/validate.middleware');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const roleMiddleware = require('../../middlewares/role.middleware');
 const { ROLES } = require('../../config/constants');
+const feeReminderService = require('./feeReminder.service');
 
 // NOTE: /webhook is intentionally NOT under authMiddleware — Razorpay's servers
 // call it directly, verified instead via HMAC signature inside the controller.
 router.post('/webhook', feeController.webhook);
+
+router.post('/send-reminders', roleMiddleware(ROLES.SUPER_ADMIN), async (req, res) => {
+  const result = await feeReminderService.sendFeeDueReminders();
+  res.status(200).json({ success: true, data: result, message: 'Fee reminders triggered' });
+});
 
 router.use(authMiddleware);
 
@@ -37,6 +43,8 @@ router.get('/overview', roleMiddleware(ROLES.ADMIN), feeController.getFeeOvervie
 router.get('/batch/:batchId', roleMiddleware(ROLES.ADMIN, ROLES.TEACHER), feeController.getBatchFees);
 
 router.get('/me', roleMiddleware(ROLES.STUDENT), feeController.getMyFees);
+
+router.get('/:id/receipt', roleMiddleware(ROLES.ADMIN, ROLES.STUDENT, ROLES.PARENT), feeController.getReceipt);
 
 router.get(
   '/student/:studentId',

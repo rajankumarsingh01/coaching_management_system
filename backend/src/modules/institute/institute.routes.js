@@ -8,7 +8,6 @@ const authMiddleware = require('../../middlewares/auth.middleware');
 const roleMiddleware = require('../../middlewares/role.middleware');
 const { ROLES } = require('../../config/constants');
 
-// Only super_admin can create institutes — institutes do not self-register
 router.post(
   '/',
   authMiddleware,
@@ -18,5 +17,8 @@ router.post(
 );
 
 router.get('/', authMiddleware, roleMiddleware(ROLES.SUPER_ADMIN), instituteController.getAllInstitutes);
+
+// mounted here so URLs are /api/v1/institutes/:instituteId/branding/...
+router.use('/:instituteId/branding', require('../branding/branding.routes'));
 
 module.exports = router;

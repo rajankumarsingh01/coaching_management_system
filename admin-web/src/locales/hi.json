@@ -1,0 +1,35 @@
+{
+  "common": {
+    "login": "लॉगिन",
+    "logout": "लॉगआउट",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "create": "बनाएं",
+    "delete": "हटाएं",
+    "loading": "लोड हो रहा है...",
+    "name": "नाम",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "dashboard": "डैशबोर्ड",
+    "batches": "बैच",
+    "attendance": "उपस्थिति",
+    "fees": "फीस",
+    "content": "सामग्री",
+    "tests": "टेस्ट",
+    "homework": "गृहकार्य",
+    "calendar": "कैलेंडर",
+    "branding": "ब्रांडिंग",
+    "createUser": "उपयोगकर्ता बनाएं"
+  },
+  "auth": {
+    "loginTitle": "एडमिन लॉगिन",
+    "loginButton": "लॉगिन करें",
+    "emailPlaceholder": "ईमेल",
+    "passwordPlaceholder": "पासवर्ड"
+  },
+  "dashboard": {
+    "welcome": "स्वागत है",
+    "role": "भूमिका",
+    "instituteId": "संस्थान आईडी"
+  }
+}

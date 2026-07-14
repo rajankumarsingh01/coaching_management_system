@@ -1,0 +1,35 @@
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "dashboard": "Dashboard",
+    "batches": "Batches",
+    "attendance": "Attendance",
+    "fees": "Fees",
+    "content": "Content",
+    "tests": "Tests",
+    "homework": "Homework",
+    "calendar": "Calendar",
+    "branding": "Branding",
+    "createUser": "Create User"
+  },
+  "auth": {
+    "loginTitle": "Admin Login",
+    "loginButton": "Login",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "role": "Role",
+    "instituteId": "Institute ID"
+  }
+}

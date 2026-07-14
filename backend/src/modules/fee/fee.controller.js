@@ -53,6 +53,16 @@ const getFeeOverview = catchAsync(async (req, res) => {
   res.status(200).json(new ApiResponse(200, overview, 'Fee overview fetched successfully'));
 });
 
+
+const getReceipt = catchAsync(async (req, res) => {
+  const pdfBuffer = await feeService.getReceiptPDF(getRequester(req), req.params.id);
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename=receipt-${req.params.id}.pdf`,
+  });
+  res.send(pdfBuffer);
+});
+
 module.exports = {
   createFee,
   markFeePaid,
@@ -63,4 +73,5 @@ module.exports = {
   getMyFees,
   getStudentFees,
   getFeeOverview,
+  getReceipt,
 };

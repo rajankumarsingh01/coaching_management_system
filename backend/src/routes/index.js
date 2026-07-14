@@ -13,5 +13,12 @@ router.use('/attendance', require('../modules/attendance/attendance.routes'));
 router.use('/fees', require('../modules/fee/fee.routes'));
 router.use('/notes', require('../modules/notes/notes.routes'));
 router.use('/lectures', require('../modules/lecture/lecture.routes'));
+router.use('/tests', require('../modules/test/test.routes'));
+router.use('/results', require('../modules/result/result.routes'));
+router.use('/homework', require('../modules/homework/homework.routes'));
+router.use('/submissions', require('../modules/submission/submission.routes'));
+router.use('/notifications', require('../modules/notification/notification.routes'));
+router.use('/calendar', require('../modules/calendar/calendar.routes'));
+router.use('/gamification', require('../modules/gamification/gamification.routes'));
 
 module.exports = router;

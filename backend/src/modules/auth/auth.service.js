@@ -18,7 +18,12 @@ const login = async (email, password) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
-  const payload = { id: user._id, role: user.role, instituteId: user.instituteId };
+  const payload = {
+    id: user._id,
+    role: user.role,
+    instituteId: user.instituteId,
+    batchIds: user.batchIds,
+  };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
@@ -50,7 +55,12 @@ const refreshAccessToken = async (token) => {
     throw new ApiError(401, 'Refresh token does not match');
   }
 
-  const payload = { id: user._id, role: user.role, instituteId: user.instituteId };
+  const payload = {
+    id: user._id,
+    role: user.role,
+    instituteId: user.instituteId,
+    batchIds: user.batchIds,
+  };
   const accessToken = generateAccessToken(payload);
 
   return { accessToken };

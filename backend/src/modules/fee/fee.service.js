@@ -9,6 +9,11 @@ const razorpayInstance = require('../../config/razorpay.config');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
 
+
+const Institute = require('../institute/institute.model');
+const User = require('../user/user.model');
+const { generateReceiptPDF } = require('../../utils/generateReceipt');
+
 const toIdString = (entry) => String(entry?._id ?? entry);
 
 const createFee = async (requester, { studentId, batchId, amount, dueDate, remarks }) => {
@@ -202,6 +207,30 @@ const getFeeOverview = async (requester) => {
   };
 };
 
+
+// requester = { id, role, instituteId }
+const getReceiptPDF = async (requester, feeId) => {
+  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const fee = await feeRepository.findByIdScoped(feeId, filter);
+  if (!fee) throw new ApiError(404, 'Fee record not found');
+
+  if (fee.status !== FEE_STATUS.PAID) {
+    throw new ApiError(400, 'Receipt is only available for paid fees');
+  }
+
+  // students/parents may only download their own/child's receipt
+  if (requester.role === ROLES.STUDENT && String(fee.studentId) !== String(requester.id)) {
+    throw new ApiError(403, 'You can only download your own receipt');
+  }
+
+  const institute = await Institute.findById(fee.instituteId);
+  const student = await User.findById(fee.studentId);
+  if (!institute || !student) throw new ApiError(404, 'Related data not found');
+
+  const pdfBuffer = await generateReceiptPDF({ institute, fee, student });
+  return pdfBuffer;
+};
+
 module.exports = {
   createFee,
   markFeePaid,
@@ -211,4 +240,5 @@ module.exports = {
   getBatchFees,
   getStudentFees,
   getFeeOverview,
+  getReceiptPDF,
 };

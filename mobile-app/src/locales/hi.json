@@ -1,0 +1,21 @@
+{
+  "common": {
+    "login": "लॉगिन",
+    "logout": "लॉगआउट",
+    "loading": "लोड हो रहा है...",
+    "attendance": "उपस्थिति",
+    "fees": "फीस",
+    "notes": "नोट्स",
+    "lectures": "व्याख्यान",
+    "tests": "टेस्ट",
+    "homework": "गृहकार्य",
+    "calendar": "कैलेंडर",
+    "achievements": "उपलब्धियां"
+  },
+  "auth": {
+    "loginTitle": "लॉगिन",
+    "emailPlaceholder": "ईमेल",
+    "passwordPlaceholder": "पासवर्ड",
+    "loginButton": "लॉगिन करें"
+  }
+}

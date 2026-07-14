@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../src/context/AuthContext';
+import { useBranding } from '../../src/context/BrandingContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { branding } = useBranding();
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     setLoading(true);
@@ -43,10 +47,14 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Coaching Platform Login</Text>
+      {branding?.logoUrl ? (
+        <Image source={{ uri: branding.logoUrl }} style={styles.logo} resizeMode="contain" />
+      ) : null}
+
+      <Text style={styles.title}>{branding?.displayName || 'Coaching Platform'} {t('auth.loginTitle')}</Text>
 
       <TextInput
-        placeholder="Email"
+        placeholder={t('auth.emailPlaceholder')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -55,15 +63,19 @@ export default function LoginScreen() {
       />
 
       <TextInput
-        placeholder="Password"
+        placeholder={t('auth.passwordPlaceholder')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
+      <TouchableOpacity
+        style={[styles.button, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : null]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>{loading ? '...' : t('auth.loginButton')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -71,7 +83,8 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
+  logo: { width: 80, height: 80, alignSelf: 'center', marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',

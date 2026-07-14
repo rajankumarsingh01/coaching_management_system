@@ -3,6 +3,9 @@ const resultRepository = require('./result.repository');
 const testRepository = require('../test/test.repository');
 const { ROLES } = require('../../config/constants');
 const gamificationService = require('../gamification/gamification.service');
+const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
+const { getTenantFilter } = require('../../utils/tenantFilter');
+
 
 const submitTest = async (requester, testId, answers) => {
   const existing = await resultRepository.findByStudentAndTest(requester.id, testId);
@@ -10,7 +13,7 @@ const submitTest = async (requester, testId, answers) => {
     throw new ApiError(400, 'You have already submitted this test');
   }
 
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+const filter = getTenantFilter(requester);
   const test = await testRepository.findByIdScoped(testId, { ...filter, isPublished: true });
   if (!test) throw new ApiError(404, 'Test not found or not published');
 
@@ -46,18 +49,21 @@ const submitTest = async (requester, testId, answers) => {
 };
 
 const getTestResults = async (requester, testId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   return resultRepository.findByTest(testId, filter);
 };
 
 const getMyResults = async (requester) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+const filter = getTenantFilter(requester);
   return resultRepository.findByStudent(requester.id, filter);
 };
 
 // Batch-wise leaderboard — ranks students by average percentage across all their results in this batch
 const getLeaderboard = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  await assertCanAccessBatch(requester, batchId);   // 👈 NAYI LINE
+
+  
+  const filter = getTenantFilter(requester);
   const Result = require('./result.model');
 
   const results = await Result.find({ batchId, ...filter }).populate('studentId', 'name email');
@@ -81,7 +87,7 @@ const getLeaderboard = async (requester, batchId) => {
 
 // Weak Topic Detector — aggregates topic-wise correctness across all of a student's results
 const getWeakTopics = async (requester, studentId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const results = await resultRepository.findByStudent(studentId, filter);
 
   const topicStats = {};

@@ -2,6 +2,9 @@ const ApiError = require('../../utils/ApiError');
 const attendanceRepository = require('./attendance.repository');
 const batchRepository = require('../batch/batch.repository');
 const { ROLES } = require('../../config/constants');
+const { assertCanAccessStudent } = require('../../utils/ownershipGuard');
+const { getTenantFilter } = require('../../utils/tenantFilter');
+
 
 const normalizeDate = (dateStr) => {
   const d = new Date(dateStr);
@@ -16,7 +19,8 @@ const toIdString = (entry) => String(entry?._id ?? entry);
 
 // requester = { id, role, instituteId }
 const markAttendance = async (requester, { batchId, date, records }) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
+
   const batch = await batchRepository.findByIdScoped(batchId, filter);
   if (!batch) {
     throw new ApiError(404, 'Batch not found');
@@ -53,14 +57,19 @@ const markAttendance = async (requester, { batchId, date, records }) => {
 };
 
 const getBatchAttendanceForDate = async (requester, batchId, date) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
+
   const normalizedDate = normalizeDate(date);
   return attendanceRepository.findByBatchAndDate(batchId, normalizedDate, filter);
 };
 
 const getStudentAttendanceSummary = async (requester, studentId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
 
+
+    await assertCanAccessStudent(requester, studentId);   // 👈 NAYI LINE
+
+    
+ const filter = getTenantFilter(requester);
   const { total, present } = await attendanceRepository.countByStudent(studentId, filter);
   const percentage = total === 0 ? 0 : Math.round((present / total) * 100);
 
@@ -70,7 +79,8 @@ const getStudentAttendanceSummary = async (requester, studentId) => {
 };
 
 const getBatchAttendanceReport = async (requester, batchId, startDate, endDate) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+ 
   const start = normalizeDate(startDate);
   const end = normalizeDate(endDate);
   return attendanceRepository.findByBatchDateRange(batchId, start, end, filter);

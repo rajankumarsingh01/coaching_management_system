@@ -5,11 +5,12 @@ const cloudinary = require('../../config/cloudinary.config');
 const { uploadBufferToCloudinary } = require('../../utils/cloudinaryUpload');
 const { ROLES } = require('../../config/constants');
 const notificationService = require('../notification/notification.service');
-
+const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
+const { getTenantFilter } = require('../../utils/tenantFilter');
 const toIdString = (entry) => String(entry?._id ?? entry);
 
 const createHomework = async (requester, { title, description, batchId, dueDate }, file) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const batch = await batchRepository.findByIdScoped(batchId, filter);
   if (!batch) throw new ApiError(404, 'Batch not found');
 
@@ -52,12 +53,15 @@ const createHomework = async (requester, { title, description, batchId, dueDate 
 };
 
 const getBatchHomework = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+
+   await assertCanAccessBatch(requester, batchId);   // 👈 NAYI LINE
+   
+  const filter = getTenantFilter(requester);
   return homeworkRepository.findByBatch(batchId, filter);
 };
 
 const deleteHomework = async (requester, homeworkId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const homework = await homeworkRepository.findByIdScoped(homeworkId, filter);
   if (!homework) throw new ApiError(404, 'Homework not found');
 

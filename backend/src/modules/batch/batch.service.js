@@ -2,7 +2,7 @@ const ApiError = require('../../utils/ApiError');
 const batchRepository = require('./batch.repository');
 const userRepository = require('../user/user.repository');
 const { ROLES } = require('../../config/constants');
-
+const { getTenantFilter } = require('../../utils/tenantFilter');
 // requester = { id, role, instituteId }
 const createBatch = async (requester, { name, subject }) => {
   if (!requester.instituteId) {
@@ -19,12 +19,12 @@ const createBatch = async (requester, { name, subject }) => {
 };
 
 const getAllBatches = async (requester) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   return batchRepository.findAll(filter);
 };
 
 const getBatchById = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const batch = await batchRepository.findByIdScoped(batchId, filter);
   if (!batch) {
     throw new ApiError(404, 'Batch not found');

@@ -14,6 +14,12 @@ const findById = (id, withRefreshToken = false) => {
   return query;
 };
 
+// NEW — scoped lookup, so an admin can never touch a user outside their institute
+const findByIdScoped = (id, filter = {}) => User.findOne({ _id: id, ...filter });
+
+// NEW
+const updateById = (id, data) => User.findByIdAndUpdate(id, data, { new: true });
+
 const updateRefreshToken = (id, refreshToken) =>
   User.findByIdAndUpdate(id, { refreshToken }, { new: true });
 
@@ -23,6 +29,8 @@ module.exports = {
   create,
   findByEmail,
   findById,
+  findByIdScoped,   // 👈 new export
+  updateById,        // 👈 new export
   updateRefreshToken,
   findAll,
 };

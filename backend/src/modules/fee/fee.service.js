@@ -8,7 +8,7 @@ const { FEE_STATUS } = require('./fee.model');
 const razorpayInstance = require('../../config/razorpay.config');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
-
+const { getTenantFilter } = require('../../utils/tenantFilter');
 
 const Institute = require('../institute/institute.model');
 const User = require('../user/user.model');
@@ -51,7 +51,7 @@ const createFee = async (requester, { studentId, batchId, amount, dueDate, remar
 
 // Admin manually marking a fee as paid (cash/offline payment) — unchanged from before
 const markFeePaid = async (requester, feeId, remarks) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const fee = await feeRepository.findByIdScoped(feeId, filter);
   if (!fee) {
     throw new ApiError(404, 'Fee record not found');
@@ -70,7 +70,8 @@ const markFeePaid = async (requester, feeId, remarks) => {
 
 // Student initiates online payment — creates a Razorpay order for this fee
 const createRazorpayOrder = async (requester, feeId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+
   const fee = await feeRepository.findByIdScoped(feeId, filter);
   if (!fee) {
     throw new ApiError(404, 'Fee record not found');
@@ -106,7 +107,8 @@ const createRazorpayOrder = async (requester, feeId) => {
 // Called by the client (mobile app) right after Razorpay checkout succeeds —
 // verifies the payment signature server-side before trusting it.
 const verifyPayment = async (requester, { feeId, razorpay_order_id, razorpay_payment_id, razorpay_signature }) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+
   const fee = await feeRepository.findByIdScoped(feeId, filter);
   if (!fee) {
     throw new ApiError(404, 'Fee record not found');
@@ -171,19 +173,22 @@ const handleWebhook = async (rawBody, signatureHeader) => {
 };
 
 const getBatchFees = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+
   await feeRepository.markOverdue(filter);
   return feeRepository.findByBatch(batchId, filter);
 };
 
 const getStudentFees = async (requester, studentId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+
   await feeRepository.markOverdue(filter);
   return feeRepository.findByStudent(studentId, filter);
 };
 
 const getFeeOverview = async (requester) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+
   await feeRepository.markOverdue(filter);
 
   const allFees = await feeRepository.findAllForInstitute(filter);
@@ -210,7 +215,8 @@ const getFeeOverview = async (requester) => {
 
 // requester = { id, role, instituteId }
 const getReceiptPDF = async (requester, feeId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
+  
   const fee = await feeRepository.findByIdScoped(feeId, filter);
   if (!fee) throw new ApiError(404, 'Fee record not found');
 

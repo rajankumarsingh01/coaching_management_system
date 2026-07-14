@@ -78,4 +78,84 @@ const getMyChildren = async (parentId) => {
   return children.map((c) => ({ id: c._id, name: c.name, email: c.email }));
 };
 
-module.exports = { registerUser, getUserProfile, getUsersByRole, getMyChildren };
+// NEW — admin viewing a single user's full profile (e.g. before editing)
+const getUserById = async (requester, targetUserId) => {
+  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const user = await userRepository.findByIdScoped(targetUserId, filter);
+  if (!user) throw new ApiError(404, 'User not found');
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    batchIds: user.batchIds,
+    parentId: user.parentId,
+    isActive: user.isActive,
+    createdAt: user.createdAt,
+  };
+};
+
+// NEW
+const updateUser = async (requester, targetUserId, updates) => {
+  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const target = await userRepository.findByIdScoped(targetUserId, filter);
+  if (!target) throw new ApiError(404, 'User not found');
+
+  // Prevent privilege escalation / accidental admin-account edits — this
+  // endpoint is for managing Teacher/Student/Parent accounts only.
+  if (target.role === ROLES.ADMIN || target.role === ROLES.SUPER_ADMIN) {
+    throw new ApiError(403, 'Cannot modify an admin account through this endpoint');
+  }
+
+  if (updates.email && updates.email !== target.email) {
+    const existing = await userRepository.findByEmail(updates.email);
+    if (existing) throw new ApiError(409, 'A user with this email already exists');
+  }
+
+  const updated = await userRepository.updateById(targetUserId, updates);
+  return {
+    id: updated._id,
+    name: updated.name,
+    email: updated.email,
+    role: updated.role,
+    batchIds: updated.batchIds,
+    isActive: updated.isActive,
+  };
+};
+
+// NEW — soft delete (sets isActive: false, never removes the document —
+// attendance/fee/homework/result records reference this user, and hard-
+// deleting would orphan that history). This plugs directly into the
+// isActive check already added to auth.service.js's login flow.
+const deactivateUser = async (requester, targetUserId) => {
+  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const target = await userRepository.findByIdScoped(targetUserId, filter);
+  if (!target) throw new ApiError(404, 'User not found');
+
+  if (target.role === ROLES.ADMIN || target.role === ROLES.SUPER_ADMIN) {
+    throw new ApiError(403, 'Cannot deactivate an admin account through this endpoint');
+  }
+
+  await userRepository.updateById(targetUserId, { isActive: false });
+};
+
+// NEW — undo a deactivation
+const reactivateUser = async (requester, targetUserId) => {
+  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const target = await userRepository.findByIdScoped(targetUserId, filter);
+  if (!target) throw new ApiError(404, 'User not found');
+
+  await userRepository.updateById(targetUserId, { isActive: true });
+};
+
+module.exports = {
+  registerUser,
+  getUserProfile,
+  getUsersByRole,
+  getMyChildren,
+  getUserById,      // 👈 new export
+  updateUser,        // 👈 new export
+  deactivateUser,    // 👈 new export
+  reactivateUser,    // 👈 new export
+};

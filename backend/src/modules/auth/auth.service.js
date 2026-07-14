@@ -7,6 +7,9 @@ const {
   verifyRefreshToken,
 } = require('../../utils/token');
 
+
+
+
 const login = async (email, password) => {
   const user = await userRepository.findByEmail(email, true);
   if (!user) {
@@ -18,12 +21,21 @@ const login = async (email, password) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
+  // Admin can deactivate a user (e.g. student left, teacher no longer
+  // employed) without deleting their account/history. This check was
+  // missing — the model already had isActive, but login never read it,
+  // so a deactivated user could still log in normally.
+  if (!user.isActive) {
+    throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
+  }
+
   const payload = {
     id: user._id,
     role: user.role,
     instituteId: user.instituteId,
     batchIds: user.batchIds,
   };
+  // ...baaki code same rahega
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
@@ -42,6 +54,8 @@ const login = async (email, password) => {
   };
 };
 
+
+
 const refreshAccessToken = async (token) => {
   let decoded;
   try {
@@ -54,6 +68,15 @@ const refreshAccessToken = async (token) => {
   if (!user || user.refreshToken !== token) {
     throw new ApiError(401, 'Refresh token does not match');
   }
+
+
+  // Same isActive check as login — a deactivated user's existing refresh
+  // token shouldn't silently keep minting new access tokens.
+  if (!user.isActive) {
+    throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
+  }
+
+  
 
   const payload = {
     id: user._id,

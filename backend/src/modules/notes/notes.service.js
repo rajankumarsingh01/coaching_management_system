@@ -4,7 +4,8 @@ const batchRepository = require('../batch/batch.repository');
 const cloudinary = require('../../config/cloudinary.config');
 const { uploadBufferToCloudinary } = require('../../utils/cloudinaryUpload');
 const { ROLES } = require('../../config/constants');
-
+const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
+const { getTenantFilter } = require('../../utils/tenantFilter');
 const toIdString = (entry) => String(entry?._id ?? entry);
 
 const MIME_TO_TYPE = {
@@ -17,7 +18,8 @@ const MIME_TO_TYPE = {
 const uploadNotes = async (requester, { title, batchId }, file) => {
   if (!file) throw new ApiError(400, 'A file is required');
 
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
+
   const batch = await batchRepository.findByIdScoped(batchId, filter);
   if (!batch) throw new ApiError(404, 'Batch not found');
 
@@ -42,12 +44,16 @@ const uploadNotes = async (requester, { title, batchId }, file) => {
 };
 
 const getBatchNotes = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+    await assertCanAccessBatch(requester, batchId);   // 👈 NAYI LINE
+    
+  const filter = getTenantFilter(requester);
+
   return notesRepository.findByBatch(batchId, filter);
 };
 
 const deleteNotes = async (requester, notesId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
+ 
   const notes = await notesRepository.findByIdScoped(notesId, filter);
   if (!notes) throw new ApiError(404, 'Notes not found');
 

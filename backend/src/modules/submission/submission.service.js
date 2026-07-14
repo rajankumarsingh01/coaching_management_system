@@ -5,7 +5,7 @@ const { uploadBufferToCloudinary } = require('../../utils/cloudinaryUpload');
 const { ROLES } = require('../../config/constants');
 const gamificationService = require('../gamification/gamification.service');
 const submissionRepositoryForCount = require('./submission.repository');
-
+const { getTenantFilter } = require('../../utils/tenantFilter');
 
 const submitHomework = async (requester, homeworkId, file) => {
   if (!file) throw new ApiError(400, 'A file is required');
@@ -13,7 +13,7 @@ const submitHomework = async (requester, homeworkId, file) => {
   const existing = await submissionRepository.findByHomeworkAndStudent(homeworkId, requester.id);
   if (existing) throw new ApiError(400, 'You have already submitted this homework');
 
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   const homework = await homeworkRepository.findByIdScoped(homeworkId, filter);
   if (!homework) throw new ApiError(404, 'Homework not found');
 
@@ -46,12 +46,12 @@ const submitHomework = async (requester, homeworkId, file) => {
 };
 
 const getHomeworkSubmissions = async (requester, homeworkId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   return submissionRepository.findByHomework(homeworkId, filter);
 };
 
 const getMySubmissions = async (requester) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   return submissionRepository.findByStudent(requester.id, filter);
 };
 

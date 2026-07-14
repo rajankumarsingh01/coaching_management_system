@@ -3,10 +3,12 @@ const calendarRepository = require('./calendar.repository');
 const batchRepository = require('../batch/batch.repository');
 const notificationService = require('../notification/notification.service');
 const { ROLES } = require('../../config/constants');
+const userRepository = require('../user/user.repository');
+const { getTenantFilter } = require('../../utils/tenantFilter');
 
 const createEvent = async (requester, { title, date, type, batchId, description }) => {
   if (batchId) {
-    const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+    const filter = getTenantFilter(requester);
     const batch = await batchRepository.findByIdScoped(batchId, filter);
     if (!batch) throw new ApiError(404, 'Batch not found');
   }
@@ -23,7 +25,7 @@ const createEvent = async (requester, { title, date, type, batchId, description 
 
   // Notify relevant students if this is batch-scoped — fire-and-forget, never blocks the response
   if (batchId) {
-    const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+   const filter = getTenantFilter(requester);
     const batch = await batchRepository.findByIdScoped(batchId, filter);
     if (batch && batch.studentIds.length > 0) {
       notificationService
@@ -39,19 +41,30 @@ const createEvent = async (requester, { title, date, type, batchId, description 
   return event;
 };
 
-// Returns events relevant to the requesting user — institute-wide + their own batch(es)
-const getMyEvents = async (requester, userBatchIds = []) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
-  return calendarRepository.findForUser(filter, userBatchIds);
+
+// Fetches the user's CURRENT batchIds from the DB instead of trusting the
+// JWT's cached copy — the JWT can be stale for up to the access-token's
+// lifetime if an admin adds/removes the user from a batch after login,
+// which could show stale events or hide new ones until next token refresh.
+const getMyEvents = async (requester) => {
+  const filter = getTenantFilter(requester);
+
+  let currentBatchIds = [];
+  if (requester.role === ROLES.STUDENT || requester.role === ROLES.TEACHER) {
+    const user = await userRepository.findById(requester.id);
+    currentBatchIds = user?.batchIds || [];
+  }
+
+  return calendarRepository.findForUser(filter, currentBatchIds);
 };
 
 const getAllEvents = async (requester) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   return calendarRepository.findAllForInstitute(filter);
 };
 
 const deleteEvent = async (requester, eventId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   const event = await calendarRepository.findByIdScoped(eventId, filter);
   if (!event) throw new ApiError(404, 'Event not found');
   await calendarRepository.deleteById(eventId);

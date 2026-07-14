@@ -10,8 +10,7 @@ const createEvent = catchAsync(async (req, res) => {
 });
 
 const getMyEvents = catchAsync(async (req, res) => {
-  // req.user.batchIds comes from the JWT payload — see auth.service.js update below
-  const events = await calendarService.getMyEvents(getRequester(req), req.user.batchIds || []);
+  const events = await calendarService.getMyEvents(getRequester(req));
   res.status(200).json(new ApiResponse(200, events, 'Events fetched successfully'));
 });
 

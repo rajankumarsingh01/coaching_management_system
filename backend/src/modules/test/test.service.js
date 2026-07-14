@@ -6,11 +6,12 @@ const { ROLES } = require('../../config/constants');
 const { bulkQuestionRowSchema } = require('./test.validation');
 const notificationService = require('../notification/notification.service');
 const batchRepositoryForNotif = require('../batch/batch.repository');
+const { getTenantFilter } = require('../../utils/tenantFilter');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
 const assertBatchAccess = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+const filter = getTenantFilter(requester);
   const batch = await batchRepository.findByIdScoped(batchId, filter);
   if (!batch) throw new ApiError(404, 'Batch not found');
 
@@ -37,7 +38,7 @@ const createTest = async (requester, { title, batchId, durationMinutes }) => {
 };
 
 const getTestForEdit = async (requester, testId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   const test = await testRepository.findByIdScoped(testId, filter);
   if (!test) throw new ApiError(404, 'Test not found');
   return test;
@@ -138,19 +139,19 @@ const publishTest = async (requester, testId) => {
 
 // Student/parent view — never expose correctAnswer
 const getBatchTestsForStudent = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   const tests = await testRepository.findByBatch(batchId, { ...filter, isPublished: true });
   return tests;
 };
 
 // Teacher/admin view — full data including correct answers, drafts included
 const getBatchTestsForStaff = async (requester, batchId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+  const filter = getTenantFilter(requester);
   return testRepository.findByBatchFull(batchId, filter);
 };
 
 const getTestForAttempt = async (requester, testId) => {
-  const filter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
+ const filter = getTenantFilter(requester);
   const test = await testRepository.findByIdScoped(testId, { ...filter, isPublished: true });
   if (!test) throw new ApiError(404, 'Test not found or not published');
 

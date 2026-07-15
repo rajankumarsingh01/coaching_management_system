@@ -9,6 +9,7 @@ import { spacing, typography } from '../../../src/theme/tokens';
 
 const MENU_ITEMS = [
   { icon: '📚', label: 'Batches', route: '/(admin)/batches' },
+  { icon: '🖌️', label: 'Institute Branding', route: '/(admin)/branding-settings' },
   { icon: '🎨', label: 'Poster Generator', route: '/(admin)/poster-generator' },
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(admin)/settings' },
   { icon: '🏫', label: 'About Institute', route: '/(admin)/about' },

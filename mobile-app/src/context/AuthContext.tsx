@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import * as SecureStore from 'expo-secure-store';
 import axiosInstance from '../api/axiosInstance';
 
-type User = { id: string; name: string; email: string; role: string } | null;
+type User = { id: string; name: string; email: string; role: string; instituteId?: string } | null;
 
 type AuthContextType = {
   user: User;

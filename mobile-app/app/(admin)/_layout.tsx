@@ -14,6 +14,7 @@ export default function AdminLayout() {
       <Stack.Screen name="create-batch" options={{ headerShown: true, title: 'Create Batch' }} />
       <Stack.Screen name="batch-detail" options={{ headerShown: true, title: 'Batch Details' }} />
       <Stack.Screen name="batch-assign" options={{ headerShown: true, title: 'Assign' }} />
+      <Stack.Screen name="branding-settings" options={{ headerShown: true, title: 'Institute Branding' }} />
     </Stack>
   );
 }

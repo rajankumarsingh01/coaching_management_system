@@ -1,8 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import axiosInstance from '../../src/api/axiosInstance';
-import RazorpayCheckoutModal from '../../src/components/RazorpayCheckoutModal';
-import { useAuth } from '../../src/context/AuthContext';
+import { View, Text, FlatList, Alert, StyleSheet } from 'react-native';
+import axiosInstance from '../../../src/api/axiosInstance';
+import RazorpayCheckoutModal from '../../../src/components/RazorpayCheckoutModal';
+import { useAuth } from '../../../src/context/AuthContext';
+import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
+import { Card } from '../../../src/components/ui/Card';
+import { Badge } from '../../../src/components/ui/Badge';
+import { Button } from '../../../src/components/ui/Button';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { spacing, typography } from '../../../src/theme/tokens';
 
 type Fee = {
   _id: string;
@@ -12,10 +18,12 @@ type Fee = {
   batchId: { name: string };
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  paid: '#16a34a',
-  pending: '#ca8a04',
-  due: '#dc2626',
+type StatusTone = 'success' | 'warning' | 'danger';
+
+const STATUS_TONE: Record<string, StatusTone> = {
+  paid: 'success',
+  pending: 'warning',
+  due: 'danger',
 };
 
 export default function StudentFeesScreen() {
@@ -27,6 +35,7 @@ export default function StudentFeesScreen() {
     keyId: string;
   } | null>(null);
   const { user } = useAuth();
+  const colors = useThemeColors();
 
   const fetchFees = useCallback(async () => {
     const { data } = await axiosInstance.get('/fees/me');
@@ -72,26 +81,42 @@ export default function StudentFeesScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Fees</Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="My Fees" />
 
       <FlatList
         data={fees}
         keyExtractor={(item) => item._id}
-        ListEmptyComponent={<Text style={styles.empty}>No fee records yet.</Text>}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xxxl }]}>
+            No fee records yet.
+          </Text>
+        }
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.batchName}>{item.batchId?.name}</Text>
-            <Text style={styles.amount}>₹{item.amount}</Text>
-            <Text style={styles.dueDate}>Due: {new Date(item.dueDate).toLocaleDateString()}</Text>
-            <Text style={[styles.status, { color: STATUS_COLORS[item.status] }]}>{item.status}</Text>
+          <Card style={styles.card}>
+            <Text style={[typography.bodyMedium, { color: colors.text }]}>{item.batchId?.name}</Text>
+            <Text style={[typography.h1, { color: colors.text, marginTop: spacing.xs }]}>₹{item.amount}</Text>
+            <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>
+              Due: {new Date(item.dueDate).toLocaleDateString()}
+            </Text>
+
+            <View style={{ marginTop: spacing.sm }}>
+              <Badge
+                label={item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                tone={STATUS_TONE[item.status] ?? 'neutral'}
+              />
+            </View>
 
             {item.status !== 'paid' && (
-              <TouchableOpacity style={styles.payButton} onPress={() => handlePayNow(item._id)}>
-                <Text style={styles.payButtonText}>Pay Now</Text>
-              </TouchableOpacity>
+              <Button
+                label="Pay Now"
+                onPress={() => handlePayNow(item._id)}
+                fullWidth
+                style={{ marginTop: spacing.md }}
+              />
             )}
-          </View>
+          </Card>
         )}
       />
 
@@ -112,26 +137,6 @@ export default function StudentFeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 10,
-  },
-  batchName: { fontSize: 14, fontWeight: '600' },
-  amount: { fontSize: 20, fontWeight: 'bold', marginTop: 4 },
-  dueDate: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  status: { fontSize: 13, fontWeight: '600', textTransform: 'capitalize', marginTop: 4 },
-  payButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  payButtonText: { color: '#fff', fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
+  listContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl },
+  card: { marginBottom: spacing.sm },
 });

@@ -28,7 +28,41 @@ const getMyChildren = catchAsync(async (req, res) => {
   res.status(200).json(new ApiResponse(200, children, 'Children fetched successfully'));
 });
 
-module.exports = { register, getMe, getUsersByRole, getMyChildren };
+
+const getUserById = catchAsync(async (req, res) => {
+  const requester = { id: req.user.id, role: req.user.role, instituteId: req.user.instituteId };
+  const user = await userService.getUserById(requester, req.params.id);
+  res.status(200).json(new ApiResponse(200, user, 'User fetched successfully'));
+});
+
+const updateUser = catchAsync(async (req, res) => {
+  const requester = { id: req.user.id, role: req.user.role, instituteId: req.user.instituteId };
+  const user = await userService.updateUser(requester, req.params.id, req.body);
+  res.status(200).json(new ApiResponse(200, user, 'User updated successfully'));
+});
+
+const deactivateUser = catchAsync(async (req, res) => {
+  const requester = { id: req.user.id, role: req.user.role, instituteId: req.user.instituteId };
+  await userService.deactivateUser(requester, req.params.id);
+  res.status(200).json(new ApiResponse(200, null, 'User deactivated successfully'));
+});
+
+const reactivateUser = catchAsync(async (req, res) => {
+  const requester = { id: req.user.id, role: req.user.role, instituteId: req.user.instituteId };
+  await userService.reactivateUser(requester, req.params.id);
+  res.status(200).json(new ApiResponse(200, null, 'User reactivated successfully'));
+});
+
+module.exports = {
+  register,
+  getMe,
+  getUsersByRole,
+  getMyChildren,
+  getUserById,
+  updateUser,
+  deactivateUser,
+  reactivateUser,
+};
 
 
 /*

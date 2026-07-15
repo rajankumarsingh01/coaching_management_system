@@ -30,11 +30,9 @@ export default function RootLayout() {
               options={{ headerShown: true, title: 'Onboard Institute' }}
             />
            <Stack.Screen name="(admin)" />
-            <Stack.Screen name="(teacher)/index" />
-            <Stack.Screen name="(teacher)/poster-generator" options={{ headerShown: true, title: 'Poster Generator' }} />
+            <Stack.Screen name="(teacher)" />
             <Stack.Screen name="(student)" />
             <Stack.Screen name="(parent)/index" />
-            <Stack.Screen name="(teacher)/mark-attendance" options={{ headerShown: true, title: 'Mark Attendance' }} />
             <Stack.Screen name="(parent)/child-attendance" options={{ headerShown: true, title: "Child's Attendance" }} />
             <Stack.Screen name="(parent)/child-fees" options={{ headerShown: true, title: "Child's Fees" }} />
           </Stack>

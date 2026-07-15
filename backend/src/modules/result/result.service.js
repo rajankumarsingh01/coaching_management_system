@@ -5,6 +5,7 @@ const { ROLES } = require('../../config/constants');
 const gamificationService = require('../gamification/gamification.service');
 const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
 const { getTenantFilter } = require('../../utils/tenantFilter');
+const { emitToBatch, emitToInstituteRole } = require('../../socket/socket');
 
 
 const submitTest = async (requester, testId, answers) => {
@@ -44,6 +45,26 @@ const filter = getTenantFilter(requester);
   // Gamification hooks — fire-and-forget, never block the response
   gamificationService.recordActivity(requester.id, test.instituteId).catch(() => {});
   gamificationService.checkTestMasterBadge(requester.id, test.instituteId, percentage).catch(() => {});
+
+  // Leaderboard ab stale ho chuka hai — batch room ko sirf "refetch karo" signal,
+  // kisi ka individual score is broadcast me nahi bhejte (privacy)
+  emitToBatch(String(test.batchId), 'leaderboard:updated', {
+    batchId: String(test.batchId),
+    testId: String(testId),
+  });
+
+  // Teacher/admin ke liye live "submission aayi" signal — jaise ek monitoring
+  // dashboard jo dikhaye kitne students ne test attempt kar liya, real-time
+  emitToInstituteRole(String(test.instituteId), 'teacher', 'test:submission', {
+    testId: String(testId),
+    batchId: String(test.batchId),
+    studentId: String(requester.id),
+  });
+  emitToInstituteRole(String(test.instituteId), 'admin', 'test:submission', {
+    testId: String(testId),
+    batchId: String(test.batchId),
+    studentId: String(requester.id),
+  });
 
   return result;
 };

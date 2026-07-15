@@ -7,6 +7,7 @@ const { bulkQuestionRowSchema } = require('./test.validation');
 const notificationService = require('../notification/notification.service');
 const batchRepositoryForNotif = require('../batch/batch.repository');
 const { getTenantFilter } = require('../../utils/tenantFilter');
+const { emitToBatch } = require('../../socket/socket');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
@@ -133,6 +134,15 @@ const publishTest = async (requester, testId) => {
       })
       .catch(() => {});
   }
+
+  // Structured realtime event — batch room ke students ki test-list screen
+  // isi se turant refresh ho sakti hai, generic notification se alag
+  emitToBatch(String(test.batchId), 'test:new', {
+    testId: String(testId),
+    title: test.title,
+    batchId: String(test.batchId),
+    durationMinutes: test.durationMinutes,
+  });
 
   return published;
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const analyticsRoutes = require('../modules/analytics/analytics.routes');
 router.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'API is healthy' });
 });
@@ -20,5 +20,8 @@ router.use('/submissions', require('../modules/submission/submission.routes'));
 router.use('/notifications', require('../modules/notification/notification.routes'));
 router.use('/calendar', require('../modules/calendar/calendar.routes'));
 router.use('/gamification', require('../modules/gamification/gamification.routes'));
+router.use('/presence', require('../modules/presence/presence.routes'));
+
+router.use('/analytics', analyticsRoutes);
 
 module.exports = router;

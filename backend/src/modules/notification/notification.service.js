@@ -1,6 +1,7 @@
 const axios = require('axios');
 const User = require('../user/user.model');
 const logger = require('../../utils/logger');
+const { emitToUser, emitToUsers } = require('../../socket/socket');
 
 const EXPO_PUSH_API = 'https://exp.host/--/api/v2/push/send';
 
@@ -9,8 +10,12 @@ const registerPushToken = async (userId, expoPushToken) => {
 };
 
 // Sends a push notification to a single user (looked up by userId).
-// institute displayName is used in the title where available, per Update 11.
+// Ab saath me realtime socket event bhi bhejta hai — jab user ka app/dashboard
+// khula hua ho to notification instant dikhega, push ke bharose nahi rehna padega.
 const sendToUser = async (userId, { title, body, data = {} }) => {
+  // Realtime emit — chahe push token ho ya na ho, agar user online hai to turant milega
+  emitToUser(userId, 'notification:new', { title, body, data, createdAt: new Date() });
+
   const user = await User.findById(userId).select('expoPushToken');
   if (!user || !user.expoPushToken) return; // silently skip — user hasn't registered a device
 
@@ -19,6 +24,8 @@ const sendToUser = async (userId, { title, body, data = {} }) => {
 
 // Sends the same notification to multiple users at once (e.g. all students in a batch)
 const sendToUsers = async (userIds, { title, body, data = {} }) => {
+  emitToUsers(userIds, 'notification:new', { title, body, data, createdAt: new Date() });
+
   const users = await User.find({ _id: { $in: userIds }, expoPushToken: { $ne: null } }).select(
     'expoPushToken'
   );
@@ -42,8 +49,6 @@ const sendExpoNotification = async (messages) => {
       });
     }
   } catch (err) {
-    // Push failures should never break the calling feature (e.g. test creation) —
-    // log and move on.
     logger.error(`Expo push notification failed: ${err.message}`);
   }
 };

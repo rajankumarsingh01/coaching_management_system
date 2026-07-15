@@ -7,6 +7,7 @@ const { ROLES } = require('../../config/constants');
 const notificationService = require('../notification/notification.service');
 const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
 const { getTenantFilter } = require('../../utils/tenantFilter');
+const { emitToBatch } = require('../../socket/socket');
 const toIdString = (entry) => String(entry?._id ?? entry);
 
 const createHomework = async (requester, { title, description, batchId, dueDate }, file) => {
@@ -48,6 +49,15 @@ const createHomework = async (requester, { title, description, batchId, dueDate 
       })
       .catch(() => {});
   }
+
+  // Structured realtime event — batch room ke students ki homework-list
+  // screen isi se turant refresh ho sakti hai
+  emitToBatch(String(batchId), 'homework:new', {
+    homeworkId: String(homework._id),
+    title: homework.title,
+    batchId: String(batchId),
+    dueDate: homework.dueDate,
+  });
 
   return homework;
 };

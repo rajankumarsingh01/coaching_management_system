@@ -9,12 +9,41 @@ const razorpayInstance = require('../../config/razorpay.config');
 const env = require('../../config/env');
 const logger = require('../../utils/logger');
 const { getTenantFilter } = require('../../utils/tenantFilter');
+const { emitToUser, emitToInstituteRole } = require('../../socket/socket');
 
 const Institute = require('../institute/institute.model');
 const User = require('../user/user.model');
 const { generateReceiptPDF } = require('../../utils/generateReceipt');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
+
+// Payment confirm hone ke baad ka common realtime emit — markFeePaid, verifyPayment
+// aur handleWebhook teeno yahi function call karenge, taki emit logic ek hi jagah rahe.
+// Batch-wide broadcast NAHI kiya — fee financial data hai, sirf concerned log hi dekhein.
+const emitFeePaymentUpdate = async (fee) => {
+  const payload = {
+    feeId: String(fee._id),
+    studentId: String(fee.studentId),
+    batchId: String(fee.batchId),
+    amount: fee.amount,
+    status: fee.status,
+    paidDate: fee.paidDate,
+    paymentMethod: fee.paymentMethod,
+  };
+
+  // Student ko turant confirmation
+  emitToUser(fee.studentId, 'fee:payment-confirmed', payload);
+
+  // Parent bhi turant dekh sake (agar student ke saath parent linked hai)
+  const student = await userRepository.findById(fee.studentId);
+  if (student?.parentId) {
+    emitToUser(student.parentId, 'fee:payment-confirmed', payload);
+  }
+
+  // Admin dashboard ka live fee-collection % turant update — sirf admin role
+  // wale institute room me, poore batch me nahi
+  emitToInstituteRole(fee.instituteId, 'admin', 'fee:paid', payload);
+};
 
 const createFee = async (requester, { studentId, batchId, amount, dueDate, remarks }) => {
   const batchFilter = requester.role === ROLES.SUPER_ADMIN ? {} : { instituteId: requester.instituteId };
@@ -46,10 +75,22 @@ const createFee = async (requester, { studentId, batchId, amount, dueDate, remar
     markedBy: requester.id,
   });
 
+  // Naya fee record turant student/parent ko dikhe — bina app refresh kiye
+  const newFeePayload = {
+    feeId: String(fee._id),
+    amount: fee.amount,
+    dueDate: fee.dueDate,
+    status: fee.status,
+  };
+  emitToUser(fee.studentId, 'fee:created', newFeePayload);
+  if (student.parentId) {
+    emitToUser(student.parentId, 'fee:created', newFeePayload);
+  }
+
   return fee;
 };
 
-// Admin manually marking a fee as paid (cash/offline payment) — unchanged from before
+// Admin manually marking a fee as paid (cash/offline payment)
 const markFeePaid = async (requester, feeId, remarks) => {
   const filter = getTenantFilter(requester);
   const fee = await feeRepository.findByIdScoped(feeId, filter);
@@ -64,6 +105,8 @@ const markFeePaid = async (requester, feeId, remarks) => {
     paymentMethod: 'manual',
     markedBy: requester.id,
   });
+
+  await emitFeePaymentUpdate(updated);
 
   return updated;
 };
@@ -135,6 +178,8 @@ const verifyPayment = async (requester, { feeId, razorpay_order_id, razorpay_pay
     razorpaySignature: razorpay_signature,
   });
 
+  await emitFeePaymentUpdate(updated);
+
   return updated;
 };
 
@@ -159,12 +204,15 @@ const handleWebhook = async (rawBody, signatureHeader) => {
 
     const fee = await feeRepository.findByRazorpayOrderId(orderId);
     if (fee && fee.status !== FEE_STATUS.PAID) {
-      await feeRepository.updateStatus(fee._id, {
+      const updated = await feeRepository.updateStatus(fee._id, {
         status: FEE_STATUS.PAID,
         paidDate: new Date(),
         paymentMethod: 'razorpay',
         razorpayPaymentId: payment.id,
       });
+
+      await emitFeePaymentUpdate(updated);
+
       logger.info(`Webhook confirmed payment for fee ${fee._id}`);
     }
   }

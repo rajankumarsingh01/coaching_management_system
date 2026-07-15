@@ -32,6 +32,10 @@ export default function AdminLayout() {
       <Stack.Screen name="calendar-events" options={{ headerShown: true, title: 'Calendar' }} />
       <Stack.Screen name="create-event" options={{ headerShown: true, title: 'Add Event' }} />
       <Stack.Screen name="test-results" options={{ headerShown: true, title: 'Test Results' }} />
+       <Stack.Screen name="test-results" options={{ headerShown: true, title: 'Test Results' }} />
+      <Stack.Screen name="salaries" options={{ headerShown: true, title: 'Salaries' }} />
+      <Stack.Screen name="create-salary" options={{ headerShown: true, title: 'Add Salary' }} />
+      <Stack.Screen name="salary-detail" options={{ headerShown: true, title: 'Salary Details' }} />
     </Stack>
   );
 }

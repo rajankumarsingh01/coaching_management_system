@@ -11,6 +11,7 @@ router.use('/institutes', require('../modules/institute/institute.routes'));
 router.use('/batches', require('../modules/batch/batch.routes'));
 router.use('/attendance', require('../modules/attendance/attendance.routes'));
 router.use('/fees', require('../modules/fee/fee.routes'));
+router.use('/salaries', require('../modules/salary/salary.routes'));
 router.use('/notes', require('../modules/notes/notes.routes'));
 router.use('/lectures', require('../modules/lecture/lecture.routes'));
 router.use('/tests', require('../modules/test/test.routes'));

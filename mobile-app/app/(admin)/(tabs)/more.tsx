@@ -17,6 +17,8 @@ const MENU_ITEMS = [
   { icon: '🎨', label: 'Poster Generator', route: '/(admin)/poster-generator' },
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(admin)/settings' },
   { icon: '🏫', label: 'About Institute', route: '/(admin)/about' },
+  { icon: '📋', label: 'Homework', route: '/(admin)/homework-batches' },
+  { icon: '💰', label: 'Salaries', route: '/(admin)/salaries' },
 ] as const;
 
 export default function AdminMoreScreen() {

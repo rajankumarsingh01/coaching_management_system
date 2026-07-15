@@ -30,4 +30,13 @@ router.post(
   batchController.assignTeacher
 );
 
+// Teacher ko institute ke saare active batches me ek saath assign karna
+// body: { "userId": "<teacherId>" }
+router.post(
+  '/assign-teacher-all',
+  roleMiddleware(ROLES.ADMIN),
+  validate(assignUserSchema),
+  batchController.assignTeacherToAllBatches
+);
+
 module.exports = router;

@@ -96,6 +96,37 @@ const assignTeacher = async (requester, batchId, teacherId) => {
   return updated;
 };
 
+// Teacher ko institute ke SAARE active batches me ek saath assign karta hai —
+// jaise assignTeacher() ek batch handle karta hai, ye poore institute ke liye karta hai.
+const assignTeacherToAllBatches = async (requester, teacherId) => {
+  const teacher = await userRepository.findById(teacherId);
+  if (!teacher || teacher.role !== ROLES.TEACHER) {
+    throw new ApiError(400, 'Provided userId is not a valid teacher');
+  }
+  if (requester.role !== ROLES.SUPER_ADMIN && String(teacher.instituteId) !== String(requester.instituteId)) {
+    throw new ApiError(403, 'Teacher does not belong to your institute');
+  }
+  if (!teacher.instituteId) {
+    throw new ApiError(400, 'Teacher has no institute context');
+  }
+
+  const instituteId = teacher.instituteId;
+
+  // Har batch ke teacherIds me ye teacher add karo
+  await batchRepository.addTeacherToAllBatches(instituteId, teacherId);
+
+  // Teacher.batchIds ko bhi institute ke saare active batches ke saath sync karo
+  const batches = await batchRepository.findActiveByInstitute(instituteId);
+  teacher.batchIds = batches.map((b) => b._id);
+  await teacher.save();
+
+  return {
+    teacherId: teacher._id,
+    assignedBatchCount: batches.length,
+    batches,
+  };
+};
+
 module.exports = {
   createBatch,
   getAllBatches,
@@ -104,6 +135,7 @@ module.exports = {
   deleteBatch,
   assignStudent,
   assignTeacher,
+  assignTeacherToAllBatches,
 };
 
 

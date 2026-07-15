@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
 import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
@@ -66,6 +66,15 @@ export default function AdminBatchesScreen() {
         />
       </View>
 
+      <TouchableOpacity
+        style={[styles.bulkAssignBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+        onPress={() => router.push('/(admin)/assign-teacher-all')}
+      >
+        <Text style={[typography.bodyMedium, { color: colors.primary }]}>
+          🧑‍🏫 Bulk-Assign Teacher to All Batches
+        </Text>
+      </TouchableOpacity>
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item._id}
@@ -108,6 +117,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: 15,
+  },
+  bulkAssignBtn: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    alignItems: 'center',
   },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxxl },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },

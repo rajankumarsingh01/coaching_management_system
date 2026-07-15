@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
 import { useAuth } from '../../src/context/AuthContext';
@@ -16,6 +16,7 @@ export default function SuperAdminHome() {
   const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
   const { logout } = useAuth();
 
   const fetchInstitutes = async () => {
@@ -39,6 +40,29 @@ export default function SuperAdminHome() {
     fetchInstitutes();
   };
 
+  const confirmSendReminders = () => {
+    Alert.alert(
+      'Send Fee Reminders',
+      'Ye action platform ke saare institutes me due/overdue fees wale students ko push notification bhejega. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Send', style: 'destructive', onPress: sendReminders },
+      ]
+    );
+  };
+
+  const sendReminders = async () => {
+    setSendingReminders(true);
+    try {
+      const { data } = await axiosInstance.post('/fees/send-reminders');
+      Alert.alert('Done', `Reminders sent to ${data.data.sentCount} student(s).`);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to send reminders');
+    } finally {
+      setSendingReminders(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -53,6 +77,18 @@ export default function SuperAdminHome() {
         onPress={() => router.push('/(superadmin)/create-institute')}
       >
         <Text style={styles.createButtonText}>+ Onboard New Institute</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.reminderButton, sendingReminders && styles.disabledButton]}
+        onPress={confirmSendReminders}
+        disabled={sendingReminders}
+      >
+        {sendingReminders ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.createButtonText}>📣 Send Fee Reminders</Text>
+        )}
       </TouchableOpacity>
 
       {loading ? (
@@ -87,8 +123,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  reminderButton: {
+    backgroundColor: '#CA8A04',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
     marginBottom: 16,
   },
+  disabledButton: { opacity: 0.6 },
   createButtonText: { color: '#fff', fontWeight: '600' },
   card: {
     borderWidth: 1,

@@ -14,6 +14,7 @@ export default function AdminLayout() {
       <Stack.Screen name="create-batch" options={{ headerShown: true, title: 'Create Batch' }} />
       <Stack.Screen name="batch-detail" options={{ headerShown: true, title: 'Batch Details' }} />
       <Stack.Screen name="batch-assign" options={{ headerShown: true, title: 'Assign' }} />
+      <Stack.Screen name="assign-teacher-all" options={{ headerShown: true, title: 'Bulk Assign Teacher' }} />
       <Stack.Screen name="branding-settings" options={{ headerShown: true, title: 'Institute Branding' }} />
       <Stack.Screen name="content-batches" options={{ headerShown: true, title: 'Notes & Lectures' }} />
       <Stack.Screen name="batch-content" options={{ headerShown: true, title: 'Batch Content' }} />
@@ -32,7 +33,6 @@ export default function AdminLayout() {
       <Stack.Screen name="calendar-events" options={{ headerShown: true, title: 'Calendar' }} />
       <Stack.Screen name="create-event" options={{ headerShown: true, title: 'Add Event' }} />
       <Stack.Screen name="test-results" options={{ headerShown: true, title: 'Test Results' }} />
-       <Stack.Screen name="test-results" options={{ headerShown: true, title: 'Test Results' }} />
       <Stack.Screen name="salaries" options={{ headerShown: true, title: 'Salaries' }} />
       <Stack.Screen name="create-salary" options={{ headerShown: true, title: 'Add Salary' }} />
       <Stack.Screen name="salary-detail" options={{ headerShown: true, title: 'Salary Details' }} />

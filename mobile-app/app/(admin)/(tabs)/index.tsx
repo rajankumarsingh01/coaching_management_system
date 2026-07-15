@@ -7,6 +7,7 @@ import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
 import { Card } from '../../../src/components/ui/Card';
 import { StatCard } from '../../../src/components/ui/StatCard';
 import { Badge } from '../../../src/components/ui/Badge';
+import { OnlineNowWidget } from '../../../src/components/OnlineNowWidget';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
 import { spacing, typography } from '../../../src/theme/tokens';
 
@@ -80,6 +81,8 @@ export default function AdminDashboard() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListHeaderComponent={
           <>
+            <OnlineNowWidget />
+
             {loading ? (
               <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl }]}>
                 Loading dashboard...

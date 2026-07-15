@@ -13,12 +13,14 @@ const feeReminderService = require('./feeReminder.service');
 // call it directly, verified instead via HMAC signature inside the controller.
 router.post('/webhook', feeController.webhook);
 
+router.use(authMiddleware);
+
 router.post('/send-reminders', roleMiddleware(ROLES.SUPER_ADMIN), async (req, res) => {
   const result = await feeReminderService.sendFeeDueReminders();
   res.status(200).json({ success: true, data: result, message: 'Fee reminders triggered' });
 });
 
-router.use(authMiddleware);
+
 
 router.post('/', roleMiddleware(ROLES.ADMIN), validate(createFeeSchema), feeController.createFee);
 

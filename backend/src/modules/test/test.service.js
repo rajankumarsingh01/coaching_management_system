@@ -8,6 +8,7 @@ const notificationService = require('../notification/notification.service');
 const batchRepositoryForNotif = require('../batch/batch.repository');
 const { getTenantFilter } = require('../../utils/tenantFilter');
 const { emitToBatch } = require('../../socket/socket');
+const resultRepository = require('../result/result.repository');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
@@ -176,6 +177,10 @@ const getTestForAttempt = async (requester, testId) => {
 
 const deleteTest = async (requester, testId) => {
   const test = await getTestForEdit(requester, testId);
+  // Test delete hone se pehle uske saare Result records bhi delete karo —
+  // warna Result.testId dangling reference ban jata hai aur student side
+  // /results/me me populate karne par null aata hai.
+  await resultRepository.deleteByTest(test._id);
   await testRepository.deleteById(test._id);
 };
 

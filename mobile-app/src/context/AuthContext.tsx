@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 import axiosInstance from '../api/axiosInstance';
 
 type User = { id: string; name: string; email: string; role: string; instituteId?: string } | null;
@@ -57,6 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync('accessToken');
     await SecureStore.deleteItemAsync('refreshToken');
     await SecureStore.deleteItemAsync('user');
+
+    // Session clear hote hi seedha login page pe redirect — router.replace()
+    // taaki back button se wapas protected (admin/teacher/student/parent)
+    // stack me na ja sake.
+    router.replace('/(auth)/login');
   };
 
   return (

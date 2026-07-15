@@ -25,7 +25,15 @@ export default function StudentTestsScreen() {
         axiosInstance.get('/results/me'),
       ]);
       setTests(testsRes.data.data);
-      setAttemptedIds(new Set(resultsRes.data.data.map((r: any) => r.testId._id || r.testId)));
+      // testId can populate as null if the test was deleted after the
+      // student attempted it — guard against that instead of crashing.
+      setAttemptedIds(
+        new Set(
+          resultsRes.data.data
+            .filter((r: any) => r.testId)
+            .map((r: any) => r.testId._id || r.testId)
+        )
+      );
     };
     fetchData();
   }, [selectedBatch]);

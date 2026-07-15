@@ -9,6 +9,10 @@ import { spacing, typography } from '../../../src/theme/tokens';
 
 const MENU_ITEMS = [
   { icon: '📚', label: 'Batches', route: '/(admin)/batches' },
+  { icon: '📝', label: 'Notes & Lectures', route: '/(admin)/content-batches' },
+  { icon: '🧪', label: 'Tests & Quizzes', route: '/(admin)/test-batches' },
+  { icon: '📋', label: 'Homework', route: '/(admin)/homework-batches' },
+  { icon: '🗓️', label: 'Calendar', route: '/(admin)/calendar-events' },
   { icon: '🖌️', label: 'Institute Branding', route: '/(admin)/branding-settings' },
   { icon: '🎨', label: 'Poster Generator', route: '/(admin)/poster-generator' },
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(admin)/settings' },

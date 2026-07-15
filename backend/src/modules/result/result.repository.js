@@ -10,4 +10,8 @@ const findByTest = (testId, filter = {}) =>
 const findByStudent = (studentId, filter = {}) =>
   Result.find({ studentId, ...filter }).populate('testId', 'title').sort({ createdAt: -1 });
 
-module.exports = { create, findByStudentAndTest, findByTest, findByStudent };
+// Used when a Test is deleted — cleans up orphaned Result records so
+// students' /results/me never has to deal with a null-populated testId.
+const deleteByTest = (testId) => Result.deleteMany({ testId });
+
+module.exports = { create, findByStudentAndTest, findByTest, findByStudent, deleteByTest };

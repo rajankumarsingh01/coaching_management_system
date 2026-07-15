@@ -69,7 +69,9 @@ const getUsersByRole = async (requester, role) => {
       : { role, instituteId: requester.instituteId };
 
   const users = await userRepository.findAll(filter);
-  return users.map((u) => ({ id: u._id, name: u.name, email: u.email }));
+  // isActive included — mobile Users tab list needs it to show Active/Inactive
+  // badges without an extra GET /users/:id call per row.
+  return users.map((u) => ({ id: u._id, name: u.name, email: u.email, isActive: u.isActive }));
 };
 
 // parent viewing their own linked children

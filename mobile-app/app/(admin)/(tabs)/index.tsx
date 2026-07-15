@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
 import axiosInstance from '../../../src/api/axiosInstance';
 import { useAuth } from '../../../src/context/AuthContext';
 import { usePushNotifications } from '../../../src/hooks/usePushNotifications';
 import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
-import { Card, PressableCard } from '../../../src/components/ui/Card';
+import { Card } from '../../../src/components/ui/Card';
 import { StatCard } from '../../../src/components/ui/StatCard';
 import { Badge } from '../../../src/components/ui/Badge';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
@@ -40,7 +39,7 @@ export default function AdminDashboard() {
   const [batchBreakdown, setBatchBreakdown] = useState<BatchBreakdown[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const colors = useThemeColors();
 
   usePushNotifications(!!user);
@@ -72,12 +71,7 @@ export default function AdminDashboard() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader
-        title={`Welcome, ${user?.name || ''}`}
-        tagline="Admin Dashboard"
-        rightLabel="Logout"
-        onRightPress={logout}
-      />
+      <ScreenHeader title={`Welcome, ${user?.name || ''}`} tagline="Admin Dashboard" />
 
       <FlatList
         data={batchBreakdown}
@@ -131,17 +125,6 @@ export default function AdminDashboard() {
               </View>
             ) : null}
 
-            <View style={styles.quickAccess}>
-              <PressableCard style={styles.quickCard} onPress={() => router.push('/(admin)/create-user')}>
-                <Text style={styles.quickIcon}>➕</Text>
-                <Text style={[typography.bodyMedium, { color: colors.text }]}>Create User</Text>
-              </PressableCard>
-              <PressableCard style={styles.quickCard} onPress={() => router.push('/(admin)/poster-generator')}>
-                <Text style={styles.quickIcon}>🎨</Text>
-                <Text style={[typography.bodyMedium, { color: colors.text }]}>Poster Generator</Text>
-              </PressableCard>
-            </View>
-
             <Text style={[typography.label, { color: colors.textMuted }, styles.sectionLabel]}>
               BATCH-WISE BREAKDOWN (LAST 30 DAYS)
             </Text>
@@ -180,14 +163,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   statItem: { width: '47%' },
-  quickAccess: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-  },
-  quickCard: { flex: 1, alignItems: 'center', paddingVertical: spacing.lg },
-  quickIcon: { fontSize: 22, marginBottom: spacing.xs },
   sectionLabel: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.xl,

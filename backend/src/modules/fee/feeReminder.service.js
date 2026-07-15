@@ -1,16 +1,25 @@
 const Fee = require('./fee.model');
 const notificationService = require('../notification/notification.service');
 const logger = require('../../utils/logger');
+const { getTenantFilter } = require('../../utils/tenantFilter');
 
 // Sends a push notification to every student with a 'due' (overdue) or
 // soon-due 'pending' fee. Designed to be triggered by an external cron
 // (e.g. Render Cron Job hitting a protected endpoint) rather than an
 // in-process setInterval, since Render's free tier can sleep/restart.
-const sendFeeDueReminders = async () => {
+//
+// `requester` is optional: super_admin (or a cron job with no requester)
+// gets an empty tenant filter -> platform-wide reminders. An institute
+// admin gets scoped to their own instituteId via getTenantFilter, so they
+// can only nudge their own students.
+const sendFeeDueReminders = async (requester) => {
   const threeDaysFromNow = new Date();
   threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
+  const tenantFilter = requester ? getTenantFilter(requester) : {};
+
   const feesToRemind = await Fee.find({
+    ...tenantFilter,
     status: { $in: ['pending', 'due'] },
     dueDate: { $lte: threeDaysFromNow },
   }).populate('studentId', '_id');

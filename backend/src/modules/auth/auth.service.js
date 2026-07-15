@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const ApiError = require('../../utils/ApiError');
 const userRepository = require('../user/user.repository');
+const instituteRepository = require('../institute/institute.repository');   // 👈 NEW
+const { ROLES } = require('../../config/constants');                        // 👈 NEW
 const {
   generateAccessToken,
   generateRefreshToken,
@@ -27,6 +29,15 @@ const login = async (email, password) => {
   // so a deactivated user could still log in normally.
   if (!user.isActive) {
     throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
+  }
+
+  // NEW — blocked institute ka koi bhi non-super_admin user login nahi kar payega,
+  // generic invalid-credentials error ki jagah clear message milega.
+  if (user.role !== ROLES.SUPER_ADMIN) {
+    const institute = await instituteRepository.findById(user.instituteId).select('isActive');
+    if (!institute || institute.isActive === false) {
+      throw new ApiError(403, "Your institute's access has been suspended. Please contact support.", [], 'INSTITUTE_SUSPENDED');
+    }
   }
 
   const payload = {
@@ -76,7 +87,14 @@ const refreshAccessToken = async (token) => {
     throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
   }
 
-  
+  // NEW — same institute-block check yahan bhi, warna blocked institute ka
+  // user apna existing refresh token use karke naya access token bana sakta hai
+  if (user.role !== ROLES.SUPER_ADMIN) {
+    const institute = await instituteRepository.findById(user.instituteId).select('isActive');
+    if (!institute || institute.isActive === false) {
+     throw new ApiError(403, "Your institute's access has been suspended. Please contact support.", [], 'INSTITUTE_SUSPENDED');
+    }
+  }
 
   const payload = {
     id: user._id,

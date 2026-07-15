@@ -15,8 +15,9 @@ router.post('/webhook', feeController.webhook);
 
 router.use(authMiddleware);
 
-router.post('/send-reminders', roleMiddleware(ROLES.SUPER_ADMIN), async (req, res) => {
-  const result = await feeReminderService.sendFeeDueReminders();
+router.post('/send-reminders', roleMiddleware(ROLES.SUPER_ADMIN, ROLES.ADMIN), async (req, res) => {
+  const requester = { id: req.user.id, role: req.user.role, instituteId: req.user.instituteId };
+  const result = await feeReminderService.sendFeeDueReminders(requester);
   res.status(200).json({ success: true, data: result, message: 'Fee reminders triggered' });
 });
 

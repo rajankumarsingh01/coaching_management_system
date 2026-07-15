@@ -18,7 +18,6 @@ const MENU_ITEMS = [
   { icon: '🎨', label: 'Poster Generator', route: '/(teacher)/poster-generator' },
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(teacher)/settings' },
   { icon: '🏫', label: 'About Institute', route: '/(teacher)/about' },
-  { icon: '📋', label: 'Homework', route: '/(teacher)/homework-batches' },
   { icon: '💰', label: 'My Salary', route: '/(teacher)/salary' },
 ] as const;
 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 const axiosInstance = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -21,10 +22,28 @@ const onRefreshed = (newToken: string) => {
   refreshSubscribers = [];
 };
 
+// NEW — session ko poori tarah clear karke login screen pe bhejta hai.
+// Sirf INSTITUTE_SUSPENDED ke liye use hota hai, generic 403 (permission
+// denied) is se trigger NAHI hota — warna student galti se admin route
+// hit kare to bhi poore app se logout ho jaata, jo galat hai.
+const forceLogoutToLogin = async () => {
+  await SecureStore.deleteItemAsync('accessToken');
+  await SecureStore.deleteItemAsync('refreshToken');
+  await SecureStore.deleteItemAsync('user');
+  router.replace('/(auth)/login');
+};
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // NEW — institute block ka immediate effect, already-open app ke
+    // kisi bhi screen se hone wali API call pe
+    if (error.response?.status === 403 && error.response?.data?.errorCode === 'INSTITUTE_SUSPENDED') {
+      await forceLogoutToLogin();
+      return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -51,9 +70,18 @@ axiosInstance.interceptors.response.use(
           onRefreshed(newAccessToken);
         } catch (refreshError) {
           isRefreshing = false;
-          await SecureStore.deleteItemAsync('accessToken');
-          await SecureStore.deleteItemAsync('refreshToken');
-          await SecureStore.deleteItemAsync('user');
+          // NEW — refresh-token call khud bhi INSTITUTE_SUSPENDED de sakta hai
+          // (agar wahi check backend ke refreshAccessToken() me trigger hua)
+          if (
+            axios.isAxiosError(refreshError) &&
+            refreshError.response?.data?.errorCode === 'INSTITUTE_SUSPENDED'
+          ) {
+            await forceLogoutToLogin();
+          } else {
+            await SecureStore.deleteItemAsync('accessToken');
+            await SecureStore.deleteItemAsync('refreshToken');
+            await SecureStore.deleteItemAsync('user');
+          }
           return Promise.reject(refreshError);
         }
       }

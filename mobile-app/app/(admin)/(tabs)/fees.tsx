@@ -54,7 +54,13 @@ export default function AdminFeesScreen() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [markingId, setMarkingId] = useState<string | null>(null);
+
+  const [sendingReminders, setSendingReminders] = useState(false);
+
   const colors = useThemeColors();
+
+
+
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -112,6 +118,30 @@ export default function AdminFeesScreen() {
     );
   };
 
+
+  const confirmSendReminders = () => {
+  Alert.alert(
+    'Send Fee Reminders',
+    'Ye action aapke institute ke saare due/overdue fees wale students ko push notification bhejega. Continue?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Send', style: 'destructive', onPress: sendReminders },
+    ]
+  );
+};
+
+const sendReminders = async () => {
+  setSendingReminders(true);
+  try {
+    const { data } = await axiosInstance.post('/fees/send-reminders');
+    Alert.alert('Done', `Reminders sent to ${data.data.sentCount} student(s).`);
+  } catch (err: any) {
+    Alert.alert('Error', err.response?.data?.message || 'Failed to send reminders');
+  } finally {
+    setSendingReminders(false);
+  }
+};
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader
@@ -162,7 +192,23 @@ export default function AdminFeesScreen() {
                   />
                 </View>
               </View>
+
+
+
+
+
+
             ) : null}
+
+            <View style={styles.reminderWrap}>
+  <Button
+    label={sendingReminders ? 'Sending...' : '📣 Send Fee Reminders'}
+    onPress={confirmSendReminders}
+    loading={sendingReminders}
+    variant="secondary"
+    fullWidth
+  />
+</View>
 
             <View style={styles.searchWrap}>
               <TextInput
@@ -267,4 +313,5 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: spacing.lg, marginBottom: spacing.sm },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   cardBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm },
+  reminderWrap: { paddingHorizontal: spacing.lg, marginTop: spacing.lg },
 });

@@ -29,7 +29,6 @@ export default function TeacherLayout() {
       <Stack.Screen name="homework-detail" options={{ headerShown: true, title: 'Homework Details' }} />
       <Stack.Screen name="calendar-events" options={{ headerShown: true, title: 'Calendar' }} />
       <Stack.Screen name="create-event" options={{ headerShown: true, title: 'Add Event' }} />
-       <Stack.Screen name="create-event" options={{ headerShown: true, title: 'Add Event' }} />
       <Stack.Screen name="salary" options={{ headerShown: true, title: 'My Salary' }} />
     </Stack>
   );

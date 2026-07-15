@@ -22,6 +22,7 @@ router.use('/notifications', require('../modules/notification/notification.route
 router.use('/calendar', require('../modules/calendar/calendar.routes'));
 router.use('/gamification', require('../modules/gamification/gamification.routes'));
 router.use('/presence', require('../modules/presence/presence.routes'));
+router.use('/leads', require('../modules/lead/lead.routes'));
 
 router.use('/analytics', analyticsRoutes);
 

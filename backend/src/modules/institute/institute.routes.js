@@ -18,6 +18,28 @@ router.post(
 
 router.get('/', authMiddleware, roleMiddleware(ROLES.SUPER_ADMIN), instituteController.getAllInstitutes);
 
+// NEW — Phase 5 trial/subscription enforcement
+router.patch(
+  '/:id/block',
+  authMiddleware,
+  roleMiddleware(ROLES.SUPER_ADMIN),
+  instituteController.blockInstitute
+);
+
+router.patch(
+  '/:id/unblock',
+  authMiddleware,
+  roleMiddleware(ROLES.SUPER_ADMIN),
+  instituteController.unblockInstitute
+);
+
+router.post(
+  '/:id/send-trial-reminder',
+  authMiddleware,
+  roleMiddleware(ROLES.SUPER_ADMIN),
+  instituteController.sendTrialReminder
+);
+
 // mounted here so URLs are /api/v1/institutes/:instituteId/branding/...
 router.use('/:instituteId/branding', require('../branding/branding.routes'));
 

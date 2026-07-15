@@ -13,9 +13,10 @@ const errorMiddleware = (err, req, res, next) => {
 
   logger.error(`${req.method} ${req.originalUrl} - ${message}`);
 
-  res.status(statusCode || 500).json({
+res.status(statusCode || 500).json({
     success: false,
     message,
+    errorCode: err.errorCode,   // NEW
     errors: err.errors || [],
     stack: env.nodeEnv === 'development' ? err.stack : undefined,
   });

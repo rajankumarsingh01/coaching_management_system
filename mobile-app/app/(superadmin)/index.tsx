@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl, Ale
 import { router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
 import { useAuth } from '../../src/context/AuthContext';
+import { useThemeColors } from '../../src/theme/useThemeColors';
 
 type Institute = {
   _id: string;
@@ -10,7 +11,7 @@ type Institute = {
   code: string;
   subscriptionStatus: string;
   billingStatus: string;
-  isActive: boolean;   // NEW
+  isActive: boolean;
 };
 
 export default function SuperAdminHome() {
@@ -18,8 +19,9 @@ export default function SuperAdminHome() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
-  const [actioningId, setActioningId] = useState<string | null>(null); // NEW — per-card action loading
+  const [actioningId, setActioningId] = useState<string | null>(null);
   const { logout } = useAuth();
+  const colors = useThemeColors();
 
   const fetchInstitutes = async () => {
     try {
@@ -65,7 +67,6 @@ export default function SuperAdminHome() {
     }
   };
 
-  // NEW — ek specific institute ko trial-ending reminder
   const confirmTrialReminder = (item: Institute) => {
     Alert.alert(
       'Send Trial Reminder',
@@ -89,7 +90,6 @@ export default function SuperAdminHome() {
     }
   };
 
-  // NEW — block/unblock toggle
   const confirmBlockToggle = (item: Institute) => {
     const willBlock = item.isActive;
     Alert.alert(
@@ -124,80 +124,87 @@ export default function SuperAdminHome() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>All Institutes</Text>
+        <Text style={[styles.title, { color: colors.text }]}>All Institutes</Text>
         <TouchableOpacity onPress={logout}>
-          <Text style={styles.logout}>Logout</Text>
+          <Text style={[styles.logout, { color: colors.danger }]}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
-        style={styles.createButton}
+        style={[styles.createButton, { backgroundColor: colors.primary }]}
         onPress={() => router.push('/(superadmin)/create-institute')}
       >
-        <Text style={styles.createButtonText}>+ Onboard New Institute</Text>
+        <Text style={[styles.createButtonText, { color: colors.onPrimary }]}>+ Onboard New Institute</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.reminderButton, sendingReminders && styles.disabledButton]}
+        style={[styles.reminderButton, { backgroundColor: colors.warning }, sendingReminders && styles.disabledButton]}
         onPress={confirmSendReminders}
         disabled={sendingReminders}
       >
         {sendingReminders ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color={colors.onPrimary} size="small" />
         ) : (
-          <Text style={styles.createButtonText}>📣 Send Fee Reminders</Text>
+          <Text style={[styles.createButtonText, { color: colors.onPrimary }]}>📣 Send Fee Reminders</Text>
         )}
       </TouchableOpacity>
 
       {loading ? (
-        <Text style={styles.empty}>Loading...</Text>
+        <Text style={[styles.empty, { color: colors.textFaint }]}>Loading...</Text>
       ) : (
         <FlatList
           data={institutes}
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          ListEmptyComponent={<Text style={styles.empty}>No institutes yet.</Text>}
+          ListEmptyComponent={<Text style={[styles.empty, { color: colors.textFaint }]}>No institutes yet.</Text>}
           renderItem={({ item }) => {
             const isActioning = actioningId === item._id;
             return (
-              <View style={styles.card}>
+              <View style={[styles.card, { borderColor: colors.border }]}>
                 <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <View style={[styles.statusPill, item.isActive ? styles.pillActive : styles.pillBlocked]}>
-                    <Text style={styles.statusPillText}>{item.isActive ? 'Active' : 'Blocked'}</Text>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>{item.name}</Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      { backgroundColor: item.isActive ? colors.successBg : colors.dangerBg },
+                    ]}
+                  >
+                    <Text style={[styles.statusPillText, { color: colors.text }]}>
+                      {item.isActive ? 'Active' : 'Blocked'}
+                    </Text>
                   </View>
                 </View>
-                <Text style={styles.cardSub}>Code: {item.code}</Text>
-                <Text style={styles.cardSub}>Subscription: {item.subscriptionStatus}</Text>
-                <Text style={styles.cardSub}>Billing: {item.billingStatus}</Text>
+                <Text style={[styles.cardSub, { color: colors.textMuted }]}>Code: {item.code}</Text>
+                <Text style={[styles.cardSub, { color: colors.textMuted }]}>Subscription: {item.subscriptionStatus}</Text>
+                <Text style={[styles.cardSub, { color: colors.textMuted }]}>Billing: {item.billingStatus}</Text>
 
                 <View style={styles.cardActionsRow}>
                   <TouchableOpacity
-                    style={[styles.cardActionBtn, styles.remindBtn]}
+                    style={[styles.cardActionBtn, { backgroundColor: colors.primary }]}
                     onPress={() => confirmTrialReminder(item)}
                     disabled={isActioning}
                   >
                     {isActioning ? (
-                      <ActivityIndicator color="#fff" size="small" />
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
-                      <Text style={styles.cardActionText}>📩 Remind</Text>
+                      <Text style={[styles.cardActionText, { color: colors.onPrimary }]}>📩 Remind</Text>
                     )}
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
                       styles.cardActionBtn,
-                      item.isActive ? styles.blockBtn : styles.unblockBtn,
+                      { backgroundColor: item.isActive ? colors.danger : colors.success },
                     ]}
                     onPress={() => confirmBlockToggle(item)}
                     disabled={isActioning}
                   >
                     {isActioning ? (
-                      <ActivityIndicator color="#fff" size="small" />
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
-                      <Text style={styles.cardActionText}>
+                      <Text style={[styles.cardActionText, { color: colors.onPrimary }]}>
                         {item.isActive ? '🚫 Block' : '✅ Unblock'}
                       </Text>
                     )}
@@ -213,29 +220,26 @@ export default function SuperAdminHome() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 22, fontWeight: 'bold' },
-  logout: { color: '#dc2626', fontWeight: '600' },
+  logout: { fontWeight: '600' },
   createButton: {
-    backgroundColor: '#2563eb',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginBottom: 12,
   },
   reminderButton: {
-    backgroundColor: '#CA8A04',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginBottom: 16,
   },
   disabledButton: { opacity: 0.6 },
-  createButtonText: { color: '#fff', fontWeight: '600' },
+  createButtonText: { fontWeight: '600' },
   card: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
@@ -246,16 +250,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: { fontSize: 16, fontWeight: '600' },
-  cardSub: { fontSize: 13, color: '#6b7280' },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
+  cardSub: { fontSize: 13 },
+  empty: { textAlign: 'center', marginTop: 40 },
   statusPill: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
   },
-  pillActive: { backgroundColor: '#dcfce7' },
-  pillBlocked: { backgroundColor: '#fee2e2' },
-  statusPillText: { fontSize: 11, fontWeight: '700', color: '#111827' },
+  statusPillText: { fontSize: 11, fontWeight: '700' },
   cardActionsRow: {
     flexDirection: 'row',
     marginTop: 10,
@@ -267,8 +269,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'center',
   },
-  remindBtn: { backgroundColor: '#2563eb' },
-  blockBtn: { backgroundColor: '#dc2626' },
-  unblockBtn: { backgroundColor: '#16a34a' },
-  cardActionText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  cardActionText: { fontWeight: '600', fontSize: 13 },
 });

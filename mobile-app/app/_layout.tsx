@@ -26,11 +26,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)/login" />
-              <Stack.Screen name="(superadmin)/index" />
-              <Stack.Screen
-                name="(superadmin)/create-institute"
-                options={{ headerShown: true, title: 'Onboard Institute' }}
-              />
+       <Stack.Screen name="(superadmin)" />
              <Stack.Screen name="(admin)" />
               <Stack.Screen name="(teacher)" />
               <Stack.Screen name="(student)" />

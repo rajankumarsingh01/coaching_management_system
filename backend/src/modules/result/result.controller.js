@@ -29,4 +29,30 @@ const getMyWeakTopics = catchAsync(async (req, res) => {
   res.status(200).json(new ApiResponse(200, data, 'Weak topics fetched successfully'));
 });
 
-module.exports = { submitTest, getTestResults, getMyResults, getLeaderboard, getMyWeakTopics };
+
+const getStudentResults = catchAsync(async (req, res) => {
+  const results = await resultService.getStudentResults(getRequester(req), req.params.studentId);
+  res.status(200).json(new ApiResponse(200, results, "Student's results fetched successfully"));
+});
+
+const getStudentWeakTopics = catchAsync(async (req, res) => {
+  const data = await resultService.getStudentWeakTopics(getRequester(req), req.params.studentId);
+  res.status(200).json(new ApiResponse(200, data, "Student's weak topics fetched successfully"));
+});
+
+const getBatchWeakTopics = catchAsync(async (req, res) => {
+  const data = await resultService.getBatchWeakTopics(getRequester(req), req.params.batchId);
+  res.status(200).json(new ApiResponse(200, data, 'Batch weak topics fetched successfully'));
+});
+
+
+module.exports = {
+  submitTest,
+  getTestResults,
+  getMyResults,
+  getLeaderboard,
+  getMyWeakTopics,
+  getStudentResults,    
+  getStudentWeakTopics,  
+    getBatchWeakTopics,
+};

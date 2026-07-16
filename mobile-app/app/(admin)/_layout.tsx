@@ -36,6 +36,9 @@ export default function AdminLayout() {
       <Stack.Screen name="salaries" options={{ headerShown: true, title: 'Salaries' }} />
       <Stack.Screen name="create-salary" options={{ headerShown: true, title: 'Add Salary' }} />
       <Stack.Screen name="salary-detail" options={{ headerShown: true, title: 'Salary Details' }} />
+      <Stack.Screen name="weak-topics-batches" options={{ headerShown: true, title: 'Weak Topics' }} />
+<Stack.Screen name="batch-weak-topics" options={{ headerShown: true, title: 'Weak Topics' }} />
+<Stack.Screen name="generate-questions" options={{ headerShown: true, title: 'AI Question Generator' }} />
     </Stack>
   );
 }

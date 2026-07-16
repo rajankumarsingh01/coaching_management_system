@@ -75,9 +75,18 @@ const getUsersByRole = async (requester, role) => {
 };
 
 // parent viewing their own linked children
+// parent viewing their own linked children — batchIds populated so the
+// frontend knows which batch(es) to fetch homework/tests for
 const getMyChildren = async (parentId) => {
-  const children = await userRepository.findAll({ role: ROLES.STUDENT, parentId });
-  return children.map((c) => ({ id: c._id, name: c.name, email: c.email }));
+  const children = await userRepository
+    .findAll({ role: ROLES.STUDENT, parentId })
+    .populate('batchIds', 'name subject');
+  return children.map((c) => ({
+    id: c._id,
+    name: c.name,
+    email: c.email,
+    batches: c.batchIds.map((b) => ({ id: b._id, name: b.name, subject: b.subject })),
+  }));
 };
 
 // NEW — admin viewing a single user's full profile (e.g. before editing)

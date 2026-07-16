@@ -33,4 +33,23 @@ router.get(
 
 router.get('/weak-topics/me', roleMiddleware(ROLES.STUDENT), resultController.getMyWeakTopics);
 
+
+router.get(
+  '/student/:studentId',
+  roleMiddleware(ROLES.ADMIN, ROLES.TEACHER, ROLES.PARENT),
+  resultController.getStudentResults
+);
+
+router.get(
+  '/weak-topics/student/:studentId',
+  roleMiddleware(ROLES.ADMIN, ROLES.TEACHER, ROLES.PARENT),
+  resultController.getStudentWeakTopics
+);
+
+router.get(
+  '/weak-topics/batch/:batchId',
+  roleMiddleware(ROLES.ADMIN, ROLES.TEACHER),
+  resultController.getBatchWeakTopics
+);
+
 module.exports = router;

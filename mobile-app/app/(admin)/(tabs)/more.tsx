@@ -19,6 +19,7 @@ const MENU_ITEMS = [
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(admin)/settings' },
   { icon: '🏫', label: 'About Institute', route: '/(admin)/about' },
   { icon: '💰', label: 'Salaries', route: '/(admin)/salaries' },
+  { icon: '🎯', label: 'Weak Topics', route: '/(admin)/weak-topics-batches' },
 ] as const;
 
 export default function AdminMoreScreen() {

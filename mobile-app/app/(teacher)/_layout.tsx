@@ -30,6 +30,9 @@ export default function TeacherLayout() {
       <Stack.Screen name="calendar-events" options={{ headerShown: true, title: 'Calendar' }} />
       <Stack.Screen name="create-event" options={{ headerShown: true, title: 'Add Event' }} />
       <Stack.Screen name="salary" options={{ headerShown: true, title: 'My Salary' }} />
+      <Stack.Screen name="weak-topics-batches" options={{ headerShown: true, title: 'Weak Topics' }} />
+<Stack.Screen name="batch-weak-topics" options={{ headerShown: true, title: 'Weak Topics' }} />
+<Stack.Screen name="generate-questions" options={{ headerShown: true, title: 'AI Question Generator' }} />
     </Stack>
   );
 }

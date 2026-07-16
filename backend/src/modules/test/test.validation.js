@@ -33,4 +33,31 @@ const bulkQuestionRowSchema = z.object({
   Topic: z.string().optional(),
 });
 
-module.exports = { createTestSchema, addQuestionSchema, bulkQuestionRowSchema };
+const generateQuestionsSchema = z.object({
+  body: z.object({
+    topic: z.string().min(2, 'Topic is required'),
+    count: z.number().int().min(1).max(10),
+    difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  }),
+});
+
+const addGeneratedQuestionsSchema = z.object({
+  body: z.object({
+    questions: z
+      .array(
+        z.object({
+          questionText: z.string().min(3),
+          optionA: z.string().min(1),
+          optionB: z.string().min(1),
+          optionC: z.string().min(1),
+          optionD: z.string().min(1),
+          correctAnswer: z.enum(['A', 'B', 'C', 'D']),
+          topic: z.string().optional(),
+        })
+      )
+      .min(1, 'At least one question is required'),
+  }),
+});
+
+module.exports = { createTestSchema, addQuestionSchema, bulkQuestionRowSchema, generateQuestionsSchema, addGeneratedQuestionsSchema };
+

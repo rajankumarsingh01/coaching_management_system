@@ -120,6 +120,14 @@ export default function TestDetailScreen() {
           variant="outline"
           onPress={() => router.push({ pathname: '/(admin)/bulk-upload-questions', params: { testId: test._id } })}
         />
+
+        <Button
+  label="🤖 Generate with AI"
+  size="sm"
+  variant="outline"
+  onPress={() => router.push({ pathname: '/(admin)/generate-questions', params: { testId: test._id } })}
+/>
+
         {test.isPublished ? (
           <Button
             label="📊 View Results"

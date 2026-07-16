@@ -14,6 +14,7 @@ const MENU_ITEMS = [
   { icon: '🏅', label: 'My Achievements', route: '/(student)/achievements' },
   { icon: '🏫', label: 'About Institute', route: '/(student)/about' },
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(student)/settings' },
+  { icon: '🤖', label: 'AI Doubt Solver', route: '/(student)/doubt-chat' },
 ] as const;
 
 export default function StudentProfile() {

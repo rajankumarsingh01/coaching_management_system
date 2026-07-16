@@ -19,6 +19,7 @@ const MENU_ITEMS = [
   { icon: '⚙️', label: 'Settings / भाषा बदलें', route: '/(teacher)/settings' },
   { icon: '🏫', label: 'About Institute', route: '/(teacher)/about' },
   { icon: '💰', label: 'My Salary', route: '/(teacher)/salary' },
+  { icon: '🎯', label: 'Weak Topics', route: '/(teacher)/weak-topics-batches' },
 ] as const;
 
 export default function TeacherMoreScreen() {

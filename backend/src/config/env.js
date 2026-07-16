@@ -39,4 +39,8 @@ module.exports = {
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
+  // NEW — OpenRouter (gemini.config.js ki jagah ab yeh use hoga)
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+  },
 };

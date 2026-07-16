@@ -57,6 +57,17 @@ const deleteTest = catchAsync(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'Test deleted successfully'));
 });
 
+
+const generateQuestions = catchAsync(async (req, res) => {
+  const questions = await testService.generateQuestionsWithAI(getRequester(req), req.params.id, req.body);
+  res.status(200).json(new ApiResponse(200, questions, 'Questions generated — review before adding'));
+});
+
+const addGeneratedQuestions = catchAsync(async (req, res) => {
+  const test = await testService.addGeneratedQuestions(getRequester(req), req.params.id, req.body.questions);
+  res.status(200).json(new ApiResponse(200, test, 'Selected questions added to test'));
+});
+
 module.exports = {
   createTest,
   addQuestion,
@@ -66,4 +77,6 @@ module.exports = {
   getTestForAttempt,
   getTestForEdit,
   deleteTest,
+  generateQuestions,
+  addGeneratedQuestions,
 };

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const testController = require('./test.controller');
-const { createTestSchema, addQuestionSchema } = require('./test.validation');
+const { createTestSchema, addQuestionSchema, generateQuestionsSchema, addGeneratedQuestionsSchema } = require('./test.validation');
 const validate = require('../../middlewares/validate.middleware');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const roleMiddleware = require('../../middlewares/role.middleware');
@@ -41,6 +41,22 @@ router.post(
   uploadSpreadsheet.single('file'),
   testController.bulkUploadQuestions
 );
+
+
+router.post(
+  '/:id/generate-questions',
+  roleMiddleware(ROLES.TEACHER, ROLES.ADMIN),
+  validate(generateQuestionsSchema),
+  testController.generateQuestions
+);
+
+router.post(
+  '/:id/questions/add-generated',
+  roleMiddleware(ROLES.TEACHER, ROLES.ADMIN),
+  validate(addGeneratedQuestionsSchema),
+  testController.addGeneratedQuestions
+);
+
 
 router.patch('/:id/publish', roleMiddleware(ROLES.TEACHER, ROLES.ADMIN), testController.publishTest);
 

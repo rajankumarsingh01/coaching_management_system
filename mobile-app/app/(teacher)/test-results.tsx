@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
+import { useSocket } from '../../src/context/SocketContext';
 import { Card } from '../../src/components/ui/Card';
 import { Badge } from '../../src/components/ui/Badge';
 import { useThemeColors } from '../../src/theme/useThemeColors';
@@ -27,6 +28,7 @@ export default function TestResultsScreen() {
   const [results, setResults] = useState<ResultRow[]>([]);
   const [loading, setLoading] = useState(true);
   const colors = useThemeColors();
+  const { socket } = useSocket();
 
   const fetchResults = useCallback(async () => {
     setLoading(true);
@@ -44,11 +46,32 @@ export default function TestResultsScreen() {
     fetchResults();
   }, [fetchResults]);
 
+  // Real-time — jaise hi koi student is test ko submit kare, list turant
+  // (bina pull-to-refresh) naya attempt dikhaye
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    const handleSubmission = (payload: { testId: string }) => {
+      if (payload.testId === id) fetchResults();
+    };
+
+    socket.on('test:submission', handleSubmission);
+    return () => {
+      socket.off('test:submission', handleSubmission);
+    };
+  }, [socket, id, fetchResults]);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Text style={[typography.caption, { color: colors.textMuted, paddingHorizontal: spacing.lg, paddingTop: spacing.lg }]}>
-        {title} · {results.length} attempt{results.length === 1 ? '' : 's'}
-      </Text>
+      <View style={styles.headerRow}>
+        <Text style={[typography.caption, { color: colors.textMuted }]}>
+          {title} · {results.length} attempt{results.length === 1 ? '' : 's'}
+        </Text>
+        <View style={styles.liveDotRow}>
+          <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+          <Text style={[typography.caption, { color: colors.textFaint }]}>LIVE</Text>
+        </View>
+      </View>
 
       {loading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
@@ -85,6 +108,15 @@ export default function TestResultsScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  liveDotRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
   listContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxxl },
   row: { marginBottom: spacing.sm },
 });

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, TextInput, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
-import { Card } from '../../src/components/ui/Card';
+import { Card, PressableCard } from '../../src/components/ui/Card';
 import { Badge } from '../../src/components/ui/Badge';
 import { Button } from '../../src/components/ui/Button';
 import { useThemeColors } from '../../src/theme/useThemeColors';
@@ -177,7 +177,15 @@ export default function TeacherAttendanceReportScreen() {
             </Text>
           }
           renderItem={({ item }) => (
-            <Card style={styles.row}>
+            <PressableCard
+              style={styles.row}
+              onPress={() =>
+                router.push({
+                  pathname: '/(teacher)/student-attendance',
+                  params: { studentId: item.studentId, studentName: item.name },
+                })
+              }
+            >
               <View style={{ flex: 1 }}>
                 <Text style={[typography.bodyMedium, { color: colors.text }]}>{item.name}</Text>
                 <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>
@@ -185,7 +193,7 @@ export default function TeacherAttendanceReportScreen() {
                 </Text>
               </View>
               <Badge label={`${item.percentage}%`} tone={toneForPercentage(item.percentage)} />
-            </Card>
+            </PressableCard>
           )}
         />
       )}

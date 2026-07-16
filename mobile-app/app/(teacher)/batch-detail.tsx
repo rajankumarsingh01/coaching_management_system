@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
 import { Badge } from '../../src/components/ui/Badge';
 import { Button } from '../../src/components/ui/Button';
-import { Card } from '../../src/components/ui/Card';
+import { Card, PressableCard } from '../../src/components/ui/Card';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { spacing, typography } from '../../src/theme/tokens';
 
@@ -111,10 +111,21 @@ export default function TeacherBatchDetailScreen() {
         <Text style={[typography.body, { color: colors.textMuted, marginTop: spacing.sm }]}>No students assigned yet.</Text>
       ) : (
         batch.studentIds.map((s) => (
-          <Card key={s._id} style={styles.personRow}>
-            <Text style={[typography.bodyMedium, { color: colors.text }]}>{s.name}</Text>
-            <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>{s.email}</Text>
-          </Card>
+          <PressableCard
+            key={s._id}
+            style={styles.personRow}
+            onPress={() =>
+              router.push({ pathname: '/(teacher)/student-attendance', params: { studentId: s._id, studentName: s.name } })
+            }
+          >
+            <View style={styles.personRowInner}>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.bodyMedium, { color: colors.text }]}>{s.name}</Text>
+                <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>{s.email}</Text>
+              </View>
+              <Text style={{ color: colors.textFaint }}>›</Text>
+            </View>
+          </PressableCard>
         ))
       )}
     </ScrollView>
@@ -128,4 +139,5 @@ const styles = StyleSheet.create({
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
   sectionHeader: { marginTop: spacing.xxl, marginBottom: spacing.sm },
   personRow: { marginBottom: spacing.sm },
+  personRowInner: { flexDirection: 'row', alignItems: 'center' },
 });

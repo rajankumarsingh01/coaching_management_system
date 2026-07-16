@@ -15,6 +15,7 @@ export default function StudentLayout() {
       <Stack.Screen name="calendar" options={{ headerShown: true, title: 'Calendar' }} />
       <Stack.Screen name="achievements" options={{ headerShown: true, title: 'My Achievements' }} />
       <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
+      <Stack.Screen name="doubt-chat" options={{ headerShown: true, title: 'AI Doubt Solver' }} />
     </Stack>
   );
 }

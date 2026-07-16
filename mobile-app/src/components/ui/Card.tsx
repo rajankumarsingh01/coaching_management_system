@@ -14,7 +14,7 @@ type CardProps = {
   elevated?: boolean;
 };
 
-export function Card({ children, style, padded = true, elevated = false }: CardProps) {
+export function Card({ children, style, padded = true, elevated = true }: CardProps) {
   const colors = useThemeColors();
   return (
     <View
@@ -38,7 +38,7 @@ type PressableCardProps = CardProps & Pick<TouchableOpacityProps, 'onPress' | 'd
 
 // Same visual as Card but pressable — most dashboard tiles navigate
 // somewhere on tap, so this is the more commonly used variant in practice.
-export function PressableCard({ children, style, padded = true, elevated = false, onPress, disabled }: PressableCardProps) {
+export function PressableCard({ children, style, padded = true, elevated = true, onPress, disabled }: PressableCardProps) {
   const colors = useThemeColors();
   return (
     <TouchableOpacity

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import axiosInstance from '../../../src/api/axiosInstance';
 import { useBatch } from '../../../src/context/BatchContext';
+import { useSocket } from '../../../src/context/SocketContext';
 import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
 import { PressableCard } from '../../../src/components/ui/Card';
 import { Badge } from '../../../src/components/ui/Badge';
@@ -16,27 +17,52 @@ export default function StudentTestsScreen() {
   const [tests, setTests] = useState<Test[]>([]);
   const [attemptedIds, setAttemptedIds] = useState<Set<string>>(new Set());
   const colors = useThemeColors();
+  const { socket } = useSocket();
+
+  const fetchData = useCallback(async () => {
+    if (!selectedBatch) return;
+    const [testsRes, resultsRes] = await Promise.all([
+      axiosInstance.get(`/tests/batch/${selectedBatch._id}`),
+      axiosInstance.get('/results/me'),
+    ]);
+    setTests(testsRes.data.data);
+    // testId can populate as null if the test was deleted after the
+    // student attempted it — guard against that instead of crashing.
+    setAttemptedIds(
+      new Set(
+        resultsRes.data.data
+          .filter((r: any) => r.testId)
+          .map((r: any) => r.testId._id || r.testId)
+      )
+    );
+  }, [selectedBatch]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!selectedBatch) return;
-      const [testsRes, resultsRes] = await Promise.all([
-        axiosInstance.get(`/tests/batch/${selectedBatch._id}`),
-        axiosInstance.get('/results/me'),
-      ]);
-      setTests(testsRes.data.data);
-      // testId can populate as null if the test was deleted after the
-      // student attempted it — guard against that instead of crashing.
-      setAttemptedIds(
-        new Set(
-          resultsRes.data.data
-            .filter((r: any) => r.testId)
-            .map((r: any) => r.testId._id || r.testId)
-        )
-      );
-    };
     fetchData();
-  }, [selectedBatch]);
+  }, [fetchData]);
+
+  // Real-time — teacher jaise hi test publish kare (ya delete kare), is
+  // batch ke tests turant list me aa/hat jaye, koi refresh ki zarurat nahi
+  useEffect(() => {
+    if (!socket || !selectedBatch) return;
+
+    const isThisBatch = (payload: { batchId?: string }) => payload?.batchId === selectedBatch._id;
+
+    const handleNewTest = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchData();
+    };
+    const handleDeleted = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchData();
+    };
+
+    socket.on('test:new', handleNewTest);
+    socket.on('test:deleted', handleDeleted);
+
+    return () => {
+      socket.off('test:new', handleNewTest);
+      socket.off('test:deleted', handleDeleted);
+    };
+  }, [socket, selectedBatch, fetchData]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

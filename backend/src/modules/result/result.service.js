@@ -3,9 +3,10 @@ const resultRepository = require('./result.repository');
 const testRepository = require('../test/test.repository');
 const { ROLES } = require('../../config/constants');
 const gamificationService = require('../gamification/gamification.service');
-const { assertCanAccessBatch } = require('../../utils/ownershipGuard');
+
 const { getTenantFilter } = require('../../utils/tenantFilter');
 const { emitToBatch, emitToInstituteRole } = require('../../socket/socket');
+const { assertCanAccessBatch, assertCanAccessStudent } = require('../../utils/ownershipGuard');
 
 
 const submitTest = async (requester, testId, answers) => {
@@ -135,4 +136,47 @@ const getWeakTopics = async (requester, studentId) => {
   return { allTopics: topics, weakTopics };
 };
 
-module.exports = { submitTest, getTestResults, getMyResults, getLeaderboard, getWeakTopics };
+
+// Parent/Admin/Teacher viewing a SPECIFIC student's results (not their own)
+const getStudentResults = async (requester, studentId) => {
+  await assertCanAccessStudent(requester, studentId);
+  const filter = getTenantFilter(requester);
+  return resultRepository.findByStudent(studentId, filter);
+};
+
+// Parent/Admin/Teacher viewing a specific student's weak topics
+const getStudentWeakTopics = async (requester, studentId) => {
+  await assertCanAccessStudent(requester, studentId);
+  return getWeakTopics(requester, studentId);
+};
+
+
+
+// Teacher/Admin view — batch-wide weak topics (class ke saare students ka combined data)
+const getBatchWeakTopics = async (requester, batchId) => {
+  await assertCanAccessBatch(requester, batchId);
+  const filter = getTenantFilter(requester);
+  const rows = await resultRepository.getBatchTopicStats(batchId, filter);
+
+  const topics = rows.map((r) => ({
+    topic: r._id || 'General',
+    correct: r.correct,
+    total: r.total,
+    percentage: Math.round((r.correct / r.total) * 100),
+  }));
+
+  const weakTopics = topics.filter((t) => t.percentage < 50).sort((a, b) => a.percentage - b.percentage);
+
+  return { allTopics: topics, weakTopics };
+};
+
+module.exports = {
+  submitTest,
+  getTestResults,
+  getMyResults,
+  getLeaderboard,
+  getWeakTopics,
+  getStudentResults,      
+  getStudentWeakTopics, 
+  getBatchWeakTopics, 
+};

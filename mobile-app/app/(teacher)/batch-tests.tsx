@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
+import { useSocket } from '../../src/context/SocketContext';
 import { PressableCard } from '../../src/components/ui/Card';
 import { Badge } from '../../src/components/ui/Badge';
 import { Button } from '../../src/components/ui/Button';
@@ -21,6 +22,7 @@ export default function BatchTestsScreen() {
   const [tests, setTests] = useState<TestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const colors = useThemeColors();
+  const { socket } = useSocket();
 
   const fetchTests = useCallback(async () => {
     setLoading(true);
@@ -37,6 +39,39 @@ export default function BatchTestsScreen() {
   useEffect(() => {
     fetchTests();
   }, [fetchTests]);
+
+  // Real-time — koi bhi test create/publish/delete kare, ya kisi test me
+  // question add ho, isi batch ka list turant refresh, bina manual pull-to-refresh
+  useEffect(() => {
+    if (!socket || !batchId) return;
+
+    const isThisBatch = (payload: { batchId?: string }) => payload?.batchId === batchId;
+
+    const handleCreated = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchTests();
+    };
+    const handleQuestionAdded = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchTests();
+    };
+    const handlePublished = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchTests();
+    };
+    const handleDeleted = (payload: { batchId: string }) => {
+      if (isThisBatch(payload)) fetchTests();
+    };
+
+    socket.on('test:created', handleCreated);
+    socket.on('test:questionAdded', handleQuestionAdded);
+    socket.on('test:new', handlePublished);
+    socket.on('test:deleted', handleDeleted);
+
+    return () => {
+      socket.off('test:created', handleCreated);
+      socket.off('test:questionAdded', handleQuestionAdded);
+      socket.off('test:new', handlePublished);
+      socket.off('test:deleted', handleDeleted);
+    };
+  }, [socket, batchId, fetchTests]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

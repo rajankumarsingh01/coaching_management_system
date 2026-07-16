@@ -7,8 +7,11 @@ const { bulkQuestionRowSchema } = require('./test.validation');
 const notificationService = require('../notification/notification.service');
 const batchRepositoryForNotif = require('../batch/batch.repository');
 const { getTenantFilter } = require('../../utils/tenantFilter');
-const { emitToBatch } = require('../../socket/socket');
+const { emitToBatch, emitToInstituteRole } = require('../../socket/socket');
 const resultRepository = require('../result/result.repository');
+const gemini = require('../../config/openrouter.config');
+const aiUsageService = require('../aiUsage/aiUsage.service');
+const env = require('../../config/env');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
@@ -36,6 +39,19 @@ const createTest = async (requester, { title, batchId, durationMinutes }) => {
     questions: [],
   });
 
+  // Real-time — teacher/admin dashboards ka test list turant naya draft
+  // dikhaye, bina refresh kiye (jaise ek doosra teacher/admin usi batch pe
+  // dekh raha ho). Students ko nahi bhejte — ye abhi draft hai, unpublished.
+  const createdPayload = {
+    testId: String(test._id),
+    title: test.title,
+    batchId: String(batchId),
+    durationMinutes: test.durationMinutes,
+    isPublished: false,
+  };
+  emitToInstituteRole(String(batch.instituteId), 'teacher', 'test:created', createdPayload);
+  emitToInstituteRole(String(batch.instituteId), 'admin', 'test:created', createdPayload);
+
   return test;
 };
 
@@ -50,6 +66,21 @@ const getTestForEdit = async (requester, testId) => {
 const addQuestion = async (requester, testId, questionData) => {
   const test = await getTestForEdit(requester, testId);
   const updated = await testRepository.addQuestions(test._id, [questionData]);
+
+  // Real-time — test-detail screen (agar dusra device/tab khula ho) ka
+  // question count/list turant update ho jaye, teacher ko manually
+  // refresh karne ki zarurat na pade
+  emitToInstituteRole(String(updated.instituteId), 'teacher', 'test:questionAdded', {
+    testId: String(updated._id),
+    batchId: String(updated.batchId),
+    questionCount: updated.questions.length,
+  });
+  emitToInstituteRole(String(updated.instituteId), 'admin', 'test:questionAdded', {
+    testId: String(updated._id),
+    batchId: String(updated.batchId),
+    questionCount: updated.questions.length,
+  });
+
   return updated;
 };
 
@@ -107,6 +138,17 @@ const bulkUploadQuestions = async (requester, testId, file) => {
   let updatedTest = test;
   if (validQuestions.length > 0) {
     updatedTest = await testRepository.addQuestions(test._id, validQuestions);
+
+    emitToInstituteRole(String(updatedTest.instituteId), 'teacher', 'test:questionAdded', {
+      testId: String(updatedTest._id),
+      batchId: String(updatedTest.batchId),
+      questionCount: updatedTest.questions.length,
+    });
+    emitToInstituteRole(String(updatedTest.instituteId), 'admin', 'test:questionAdded', {
+      testId: String(updatedTest._id),
+      batchId: String(updatedTest.batchId),
+      questionCount: updatedTest.questions.length,
+    });
   }
 
   return {
@@ -182,7 +224,113 @@ const deleteTest = async (requester, testId) => {
   // /results/me me populate karne par null aata hai.
   await resultRepository.deleteByTest(test._id);
   await testRepository.deleteById(test._id);
+
+  // Real-time — batch-tests list (teacher/admin) se turant hata do, aur
+  // agar student ka test-list already load ho chuka hai (published test
+  // delete hua) to wahan se bhi turant gayab ho jaye
+  const deletedPayload = { testId: String(test._id), batchId: String(test.batchId) };
+  emitToInstituteRole(String(test.instituteId), 'teacher', 'test:deleted', deletedPayload);
+  emitToInstituteRole(String(test.instituteId), 'admin', 'test:deleted', deletedPayload);
+  if (test.isPublished) {
+    emitToBatch(String(test.batchId), 'test:deleted', deletedPayload);
+  }
 };
+
+
+const DAILY_GENERATION_LIMIT = 10;
+
+// Step 1: AI se questions generate karke DRAFT return karta hai — DB me kuch save nahi hota.
+// Teacher/admin frontend pe review karega, edit/discard karega, phir alag endpoint se accept karega.
+const generateQuestionsWithAI = async (requester, testId, { topic, count, difficulty }) => {
+  await getTestForEdit(requester, testId); // ensures test exists & requester owns it
+
+ if (!env.openrouter.apiKey) {
+    throw new ApiError(503, 'AI question generator is not set up yet. Please contact support.');
+  }
+
+  await aiUsageService.checkAndRecordUsage(
+    requester.id,
+    requester.instituteId,
+    'question_generation',
+    DAILY_GENERATION_LIMIT
+  );
+
+  const safeCount = Math.min(Math.max(count, 1), 10); // hard cap, chahe frontend kuch bhi bheje
+
+  const prompt = `Generate ${safeCount} multiple-choice questions (MCQs) for a school/coaching test.
+Topic: ${topic}
+Difficulty: ${difficulty || 'medium'}
+Respond ONLY with a valid JSON array, no other text, no markdown code fences, in exactly this format:
+[{"questionText": "...", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "correctAnswer": "A", "topic": "${topic}"}]`;
+
+  let raw;
+  try {
+    raw = await gemini.generateContent(prompt, 1500);
+  } catch (err) {
+    throw new ApiError(503, 'AI question generator is busy right now. Please try again in a moment.');
+  }
+
+ let parsed;
+  try {
+    let cleaned = raw.replace(/```json|```/g, '').trim();
+
+    // AI kabhi-kabhi JSON se pehle/baad me extra text likh deta hai
+    // ("Here are the questions:" jaisa) — sirf [ ... ] wala hissa nikal lo
+    const firstBracket = cleaned.indexOf('[');
+    const lastBracket = cleaned.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleaned = cleaned.slice(firstBracket, lastBracket + 1);
+    }
+
+    parsed = JSON.parse(cleaned);
+  } catch (err) {
+    console.error('AI QUESTION GEN — raw response was:', raw); // 👈 TEMP DEBUG
+    throw new ApiError(502, 'AI returned an unexpected format. Please try generating again.');
+  }
+
+  const validOptions = ['A', 'B', 'C', 'D'];
+  // Malformed entries silently drop kar dete hain — poora batch fail karne ke bajaye
+  // jo bhi valid shape me aaya, wahi teacher ko review ke liye dikhta hai
+  const cleanQuestions = (Array.isArray(parsed) ? parsed : [])
+    .filter((q) => q.questionText && q.optionA && q.optionB && q.optionC && q.optionD && validOptions.includes(q.correctAnswer))
+    .map((q) => ({
+      questionText: q.questionText,
+      optionA: q.optionA,
+      optionB: q.optionB,
+      optionC: q.optionC,
+      optionD: q.optionD,
+      correctAnswer: q.correctAnswer,
+      topic: q.topic || topic,
+    }));
+
+  return cleanQuestions;
+};
+
+// Step 2: Teacher ne jo questions review karke accept/edit kiye, unhi ko save karta hai
+const addGeneratedQuestions = async (requester, testId, questions) => {
+  const test = await getTestForEdit(requester, testId);
+
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new ApiError(400, 'No questions provided');
+  }
+
+  const updated = await testRepository.addQuestions(test._id, questions);
+
+  emitToInstituteRole(String(updated.instituteId), 'teacher', 'test:questionAdded', {
+    testId: String(updated._id),
+    batchId: String(updated.batchId),
+    questionCount: updated.questions.length,
+  });
+  emitToInstituteRole(String(updated.instituteId), 'admin', 'test:questionAdded', {
+    testId: String(updated._id),
+    batchId: String(updated.batchId),
+    questionCount: updated.questions.length,
+  });
+
+  return updated;
+};
+
+
 
 module.exports = {
   createTest,
@@ -194,4 +342,6 @@ module.exports = {
   getBatchTestsForStaff,
   getTestForAttempt,
   deleteTest,
+    generateQuestionsWithAI, // 👈 new
+  addGeneratedQuestions,   // 👈 new
 };

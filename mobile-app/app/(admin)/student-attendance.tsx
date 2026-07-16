@@ -7,7 +7,7 @@ import { AttendanceSummary, AttendanceRecord } from '../../src/components/Attend
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { useBranding } from '../../src/context/BrandingContext';
 
-export default function ChildAttendanceScreen() {
+export default function AdminStudentAttendanceScreen() {
   const { studentId, studentName } = useLocalSearchParams<{ studentId: string; studentName: string }>();
   const colors = useThemeColors();
   const { branding } = useBranding();
@@ -43,7 +43,7 @@ export default function ChildAttendanceScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader
-        title={studentName ? `${studentName}'s Attendance` : 'Attendance'}
+        title={studentName ? `${studentName}'s Attendance` : 'Student Attendance'}
         tagline={branding.instituteName}
         bannerUrl={branding.bannerImageUrl || undefined}
       />

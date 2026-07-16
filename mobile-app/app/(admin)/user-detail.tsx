@@ -147,6 +147,21 @@ export default function UserDetailScreen() {
         style={{ marginTop: spacing.xl }}
       />
 
+      {user.role === 'student' ? (
+        <Button
+          label="📊 View Attendance"
+          variant="secondary"
+          fullWidth
+          onPress={() =>
+            router.push({
+              pathname: '/(admin)/student-attendance',
+              params: { studentId: user.id, studentName: user.name },
+            })
+          }
+          style={{ marginTop: spacing.md }}
+        />
+      ) : null}
+
       <Button
         label={togglingStatus ? 'Please wait...' : user.isActive ? 'Deactivate User' : 'Reactivate User'}
         onPress={handleToggleStatus}

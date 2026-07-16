@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import axiosInstance from '../../src/api/axiosInstance';
+import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
+import { Card } from '../../src/components/ui/Card';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { spacing, typography } from '../../src/theme/tokens';
 
 type Topic = { topic: string; correct: number; total: number; percentage: number };
 
 export default function WeakTopicsScreen() {
+  const colors = useThemeColors();
   const [weakTopics, setWeakTopics] = useState<Topic[]>([]);
   const [allTopics, setAllTopics] = useState<Topic[]>([]);
 
@@ -18,70 +23,65 @@ export default function WeakTopicsScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Weak Topics</Text>
-      <Text style={styles.subtitle}>Topics below 50% accuracy — focus here!</Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="Weak Topics" tagline="Topics below 50% accuracy — focus here!" />
 
       <FlatList
         data={weakTopics}
         keyExtractor={(item) => item.topic}
+        contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.empty}>
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl }]}>
             No weak topics detected yet — either great job, or attempt more tests for data!
           </Text>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.topicName}>{item.topic}</Text>
-            <Text style={styles.stat}>
+          <Card style={[styles.card, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+            <Text style={[typography.bodyMedium, { color: colors.danger }]}>{item.topic}</Text>
+            <Text style={[typography.caption, { color: colors.danger, marginTop: spacing.xs }]}>
               {item.correct}/{item.total} correct — {item.percentage}%
             </Text>
-          </View>
+          </Card>
         )}
+        ListFooterComponent={
+          allTopics.length > 0 ? (
+            <>
+              <Text style={[typography.label, { color: colors.textMuted }, styles.sectionLabel]}>
+                ALL TOPICS
+              </Text>
+              <Card padded={false}>
+                {allTopics.map((item, index) => (
+                  <View
+                    key={item.topic + '-all'}
+                    style={[
+                      styles.rowAll,
+                      index < allTopics.length - 1 && {
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderBottomColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[typography.body, { color: colors.text }]}>{item.topic}</Text>
+                    <Text style={[typography.bodyMedium, { color: colors.text }]}>{item.percentage}%</Text>
+                  </View>
+                ))}
+              </Card>
+            </>
+          ) : null
+        }
       />
-
-      {allTopics.length > 0 && (
-        <>
-          <Text style={styles.sectionLabel}>All Topics</Text>
-          <FlatList
-            data={allTopics}
-            keyExtractor={(item) => item.topic + '-all'}
-            renderItem={({ item }) => (
-              <View style={styles.rowAll}>
-                <Text style={styles.rowAllText}>{item.topic}</Text>
-                <Text style={styles.rowAllPct}>{item.percentage}%</Text>
-              </View>
-            )}
-          />
-        </>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold' },
-  subtitle: { fontSize: 12, color: '#6b7280', marginBottom: 16 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#fca5a5',
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 10,
-  },
-  topicName: { fontSize: 15, fontWeight: '600', color: '#991b1b' },
-  stat: { fontSize: 12, color: '#b91c1c', marginTop: 4 },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 20 },
-  sectionLabel: { fontSize: 14, fontWeight: '600', marginTop: 20, marginBottom: 8 },
+  list: { padding: spacing.lg },
+  card: { borderWidth: 1, marginBottom: spacing.sm },
+  sectionLabel: { marginTop: spacing.xl, marginBottom: spacing.sm },
   rowAll: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
-  rowAllText: { fontSize: 13, color: '#374151' },
-  rowAllPct: { fontSize: 13, fontWeight: '600' },
 });

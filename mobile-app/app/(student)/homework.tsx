@@ -3,6 +3,11 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { router } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
 import { useBatch } from '../../src/context/BatchContext';
+import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
+import { Card } from '../../src/components/ui/Card';
+import { Badge } from '../../src/components/ui/Badge';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { spacing, typography } from '../../src/theme/tokens';
 
 type Homework = {
   _id: string;
@@ -14,6 +19,7 @@ type Homework = {
 
 export default function StudentHomeworkScreen() {
   const { selectedBatch } = useBatch();
+  const colors = useThemeColors();
   const [homeworkList, setHomeworkList] = useState<Homework[]>([]);
   const [submittedIds, setSubmittedIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
@@ -36,12 +42,13 @@ export default function StudentHomeworkScreen() {
   const isOverdue = (dueDate: string) => new Date(dueDate) < new Date();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Homework {selectedBatch ? `— ${selectedBatch.name}` : ''}</Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="Homework" tagline={selectedBatch ? selectedBatch.name : undefined} />
 
       <FlatList
         data={homeworkList}
         keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -49,15 +56,20 @@ export default function StudentHomeworkScreen() {
               setRefreshing(true);
               fetchData();
             }}
+            tintColor={colors.primary}
           />
         }
-        ListEmptyComponent={<Text style={styles.empty}>No homework assigned yet.</Text>}
+        ListEmptyComponent={
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xxxl }]}>
+            No homework assigned yet.
+          </Text>
+        }
         renderItem={({ item }) => {
           const submitted = submittedIds.has(item._id);
           const overdue = isOverdue(item.dueDate);
           return (
             <TouchableOpacity
-              style={styles.card}
+              activeOpacity={0.7}
               onPress={() =>
                 router.push({
                   pathname: '/(student)/submit-homework',
@@ -65,16 +77,29 @@ export default function StudentHomeworkScreen() {
                 })
               }
             >
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardSub}>by {item.createdBy?.name}</Text>
-              <Text style={[styles.dueDate, overdue && !submitted && styles.overdueText]}>
-                Due: {new Date(item.dueDate).toLocaleDateString()}
-              </Text>
-              {submitted ? (
-                <Text style={styles.submittedTag}>✅ Submitted</Text>
-              ) : overdue ? (
-                <Text style={styles.overdueTag}>⚠️ Overdue — submit now</Text>
-              ) : null}
+              <Card style={styles.card}>
+                <View style={styles.headerRow}>
+                  <Text style={[typography.bodyMedium, { color: colors.text, flex: 1 }]} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  {submitted ? (
+                    <Badge label="Submitted" tone="success" />
+                  ) : overdue ? (
+                    <Badge label="Overdue" tone="danger" />
+                  ) : null}
+                </View>
+                <Text style={[typography.caption, { color: colors.textMuted, marginTop: spacing.xs }]}>
+                  by {item.createdBy?.name}
+                </Text>
+                <Text
+                  style={[
+                    typography.caption,
+                    { color: overdue && !submitted ? colors.danger : colors.textMuted, marginTop: spacing.sm },
+                  ]}
+                >
+                  Due: {new Date(item.dueDate).toLocaleDateString()}
+                </Text>
+              </Card>
             </TouchableOpacity>
           );
         }}
@@ -84,20 +109,7 @@ export default function StudentHomeworkScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 10,
-  },
-  cardTitle: { fontSize: 15, fontWeight: '600' },
-  cardSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  dueDate: { fontSize: 12, color: '#6b7280', marginTop: 6 },
-  overdueText: { color: '#dc2626', fontWeight: '600' },
-  submittedTag: { fontSize: 12, color: '#16a34a', marginTop: 6, fontWeight: '600' },
-  overdueTag: { fontSize: 12, color: '#dc2626', marginTop: 6, fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
+  list: { padding: spacing.lg },
+  card: { marginBottom: spacing.md },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

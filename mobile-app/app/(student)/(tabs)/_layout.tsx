@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CustomTabBar } from '../../../src/components/ui/CustomTabBar';
 
 export default function StudentTabsLayout() {
@@ -10,23 +10,23 @@ export default function StudentTabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Home', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏠</Text> }}
+        options={{ title: 'Home', tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={20} color={color} /> }}
       />
       <Tabs.Screen
         name="notes"
-        options={{ title: 'Notes', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📄</Text> }}
+        options={{ title: 'Notes', tabBarIcon: ({ color }) => <Ionicons name="document-text-outline" size={20} color={color} /> }}
       />
       <Tabs.Screen
         name="tests"
-        options={{ title: 'Tests', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📝</Text> }}
+        options={{ title: 'Tests', tabBarIcon: ({ color }) => <Ionicons name="create-outline" size={20} color={color} /> }}
       />
       <Tabs.Screen
         name="fees"
-        options={{ title: 'Fees', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>💰</Text> }}
+        options={{ title: 'Fees', tabBarIcon: ({ color }) => <Ionicons name="cash-outline" size={20} color={color} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: 'Profile', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>👤</Text> }}
+        options={{ title: 'Profile', tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={20} color={color} /> }}
       />
     </Tabs>
   );

@@ -1,16 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import axiosInstance from '../../src/api/axiosInstance';
-import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
-import { AttendanceSummary, AttendanceRecord } from '../../src/components/AttendanceSummary';
-import { useThemeColors } from '../../src/theme/useThemeColors';
-import { useBranding } from '../../src/context/BrandingContext';
+import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
+import { AttendanceSummary, AttendanceRecord } from '../../../src/components/AttendanceSummary';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { useBranding } from '../../../src/context/BrandingContext';
+import { useChild } from '../../../src/context/ChildContext';
+import axiosInstance from '../../../src/api/axiosInstance';
 
-export default function ChildAttendanceScreen() {
-  const { studentId, studentName } = useLocalSearchParams<{ studentId: string; studentName: string }>();
+export default function ParentAttendanceScreen() {
   const colors = useThemeColors();
   const { branding } = useBranding();
+  const { selectedChild } = useChild();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,11 +20,11 @@ export default function ChildAttendanceScreen() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
 
   const fetchAttendance = useCallback(async () => {
-    if (!studentId) return;
+    if (!selectedChild) return;
     setLoading(true);
     setError('');
     try {
-      const { data } = await axiosInstance.get(`/attendance/student/${studentId}`);
+      const { data } = await axiosInstance.get(`/attendance/student/${selectedChild.id}`);
       setPercentage(data.data.percentage || 0);
       setTotal(data.data.total || 0);
       setPresent(data.data.present || 0);
@@ -34,7 +34,7 @@ export default function ChildAttendanceScreen() {
     } finally {
       setLoading(false);
     }
-  }, [studentId]);
+  }, [selectedChild]);
 
   useEffect(() => {
     fetchAttendance();
@@ -43,22 +43,13 @@ export default function ChildAttendanceScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScreenHeader
-        title={studentName ? `${studentName}'s Attendance` : 'Attendance'}
+        title={selectedChild ? `${selectedChild.name}'s Attendance` : 'Attendance'}
         tagline={branding.instituteName}
         bannerUrl={branding.bannerImageUrl || undefined}
       />
-      <AttendanceSummary
-        loading={loading}
-        error={error}
-        percentage={percentage}
-        total={total}
-        present={present}
-        records={records}
-      />
+      <AttendanceSummary loading={loading} error={error} percentage={percentage} total={total} present={present} records={records} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-});
+const styles = StyleSheet.create({ container: { flex: 1 } });

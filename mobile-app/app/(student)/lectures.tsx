@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import axiosInstance from '../../src/api/axiosInstance';
 import { useBatch } from '../../src/context/BatchContext';
+import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
+import { Card } from '../../src/components/ui/Card';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { spacing, typography } from '../../src/theme/tokens';
 
 type Lecture = { _id: string; title: string; youtubeUrl: string; uploadedBy: { name: string } };
 
@@ -11,10 +15,6 @@ const getVideoId = (url: string) => {
   return match ? match[1] : '';
 };
 
-// Wrapping the iframe in a real HTML page (instead of loading the embed URL
-// directly as source.uri) fixes YouTube's "Error 153 / configuration error"
-// inside React Native WebView — the embed needs a proper document/referrer
-// context, which a bare source.uri navigation doesn't provide.
 const buildPlayerHtml = (videoId: string) => `
 <!DOCTYPE html>
 <html>
@@ -37,6 +37,7 @@ const buildPlayerHtml = (videoId: string) => `
 
 export default function StudentLecturesScreen() {
   const { selectedBatch } = useBatch();
+  const colors = useThemeColors();
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [activeLecture, setActiveLecture] = useState<Lecture | null>(null);
 
@@ -52,23 +53,28 @@ export default function StudentLecturesScreen() {
   if (activeLecture) {
     const videoId = getVideoId(activeLecture.youtubeUrl);
     return (
-      <View style={styles.container}>
-        <Text style={styles.playerTitle}>{activeLecture.title}</Text>
+      <View style={{ flex: 1, backgroundColor: colors.background, padding: spacing.lg }}>
+        <Text style={[typography.h2, { color: colors.text, marginBottom: spacing.md }]}>{activeLecture.title}</Text>
         <View style={styles.playerWrapper}>
           {videoId ? (
-           <WebView
-  source={{ html: buildPlayerHtml(videoId), baseUrl: 'https://coachingapp.local' }}
-  allowsFullscreenVideo
-  mediaPlaybackRequiresUserAction={false}
-  javaScriptEnabled
-  domStorageEnabled
-  originWhitelist={['*']}
-/>
+            <WebView
+              source={{ html: buildPlayerHtml(videoId), baseUrl: 'https://coachingapp.local' }}
+              allowsFullscreenVideo
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled
+              domStorageEnabled
+              originWhitelist={['*']}
+            />
           ) : (
-            <Text style={styles.errorText}>Invalid YouTube link — could not extract video ID.</Text>
+            <Text style={[typography.body, { color: colors.danger, textAlign: 'center', marginTop: spacing.xl }]}>
+              Invalid YouTube link — could not extract video ID.
+            </Text>
           )}
         </View>
-        <Text style={styles.backLink} onPress={() => setActiveLecture(null)}>
+        <Text
+          style={[typography.bodyMedium, { color: colors.primary, marginTop: spacing.lg }]}
+          onPress={() => setActiveLecture(null)}
+        >
           ← Back to lectures
         </Text>
       </View>
@@ -76,17 +82,23 @@ export default function StudentLecturesScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Lectures {selectedBatch ? `— ${selectedBatch.name}` : ''}</Text>
-
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="Lectures" tagline={selectedBatch ? selectedBatch.name : undefined} />
       <FlatList
         data={lectures}
         keyExtractor={(item) => item._id}
-        ListEmptyComponent={<Text style={styles.empty}>No lectures added yet.</Text>}
-        renderItem={({ item }) => (
-          <Text style={styles.card} onPress={() => setActiveLecture(item)}>
-            ▶️ {item.title}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl }]}>
+            No lectures added yet.
           </Text>
+        }
+        renderItem={({ item }) => (
+          <TouchableOpacity activeOpacity={0.7} onPress={() => setActiveLecture(item)}>
+            <Card style={styles.card}>
+              <Text style={[typography.bodyMedium, { color: colors.text }]}>▶️ {item.title}</Text>
+            </Card>
+          </TouchableOpacity>
         )}
       />
     </View>
@@ -94,20 +106,7 @@ export default function StudentLecturesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 10,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
-  playerTitle: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
-  playerWrapper: { height: 220, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000' },
-  errorText: { color: '#dc2626', textAlign: 'center', marginTop: 20 },
-  backLink: { color: '#2563eb', marginTop: 16, fontWeight: '500' },
+  list: { padding: spacing.lg },
+  card: { marginBottom: spacing.sm },
+  playerWrapper: { height: 220, borderRadius: 12, overflow: 'hidden', backgroundColor: '#000' },
 });

@@ -26,15 +26,11 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)/login" />
-       <Stack.Screen name="(superadmin)" />
-             <Stack.Screen name="(admin)" />
+              <Stack.Screen name="(superadmin)" />
+              <Stack.Screen name="(admin)" />
               <Stack.Screen name="(teacher)" />
               <Stack.Screen name="(student)" />
-              <Stack.Screen name="(parent)/index" />
-              <Stack.Screen name="(parent)/child-attendance" options={{ headerShown: true, title: "Child's Attendance" }} />
-              <Stack.Screen name="(parent)/child-fees" options={{ headerShown: true, title: "Child's Fees" }} />
-              <Stack.Screen name="(parent)/child-results" options={{ headerShown: true, title: "Child's Results" }} />
-<Stack.Screen name="(parent)/child-homework" options={{ headerShown: true, title: "Child's Homework" }} />
+              <Stack.Screen name="(parent)" />
             </Stack>
           </BatchProvider>
         </BrandingProvider>

@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import axiosInstance from '../../src/api/axiosInstance';
-import { useBranding } from '../../src/context/BrandingContext';
+import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
+import { Card } from '../../src/components/ui/Card';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { spacing, typography, radius } from '../../src/theme/tokens';
 
-type Badge = { type: string; label: string; icon: string; earnedAt: string };
-
-type Profile = {
-  currentStreak: number;
-  longestStreak: number;
-  badges: Badge[];
-};
+type BadgeItem = { type: string; label: string; icon: string; earnedAt: string };
+type Profile = { currentStreak: number; longestStreak: number; badges: BadgeItem[] };
 
 export default function AchievementsScreen() {
+  const colors = useThemeColors();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const { branding } = useBranding();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -23,44 +21,62 @@ export default function AchievementsScreen() {
     fetchProfile();
   }, []);
 
-  const primaryColor = branding?.primaryColor || '#2563EB';
-
-  if (!profile) return <Text style={styles.loading}>Loading...</Text>;
+  if (!profile) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenHeader title="Achievements" />
+        <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xxxl }]}>
+          Loading...
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.streakRow}>
-        <View style={[styles.streakCard, { backgroundColor: primaryColor }]}>
-          <Text style={styles.streakEmoji}>🔥</Text>
-          <Text style={styles.streakNumber}>{profile.currentStreak}</Text>
-          <Text style={styles.streakLabel}>Current Streak</Text>
-        </View>
-        <View style={[styles.streakCard, { backgroundColor: '#6b7280' }]}>
-          <Text style={styles.streakEmoji}>⚡</Text>
-          <Text style={styles.streakNumber}>{profile.longestStreak}</Text>
-          <Text style={styles.streakLabel}>Longest Streak</Text>
-        </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>Badges Earned ({profile.badges.length})</Text>
-
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="Achievements" tagline="Streaks & badges" />
       <FlatList
         data={profile.badges}
         keyExtractor={(item) => item.type}
         numColumns={2}
-        columnWrapperStyle={{ gap: 12 }}
-        contentContainerStyle={{ gap: 12 }}
+        columnWrapperStyle={styles.badgeRow}
+        contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          <>
+            <View style={styles.streakRow}>
+              <View style={[styles.streakCard, { backgroundColor: colors.primary }]}>
+                <Text style={styles.streakEmoji}>🔥</Text>
+                <Text style={[typography.display, { color: colors.onPrimary }]}>{profile.currentStreak}</Text>
+                <Text style={[typography.caption, { color: colors.onPrimary, marginTop: 2, opacity: 0.85 }]}>
+                  Current Streak
+                </Text>
+              </View>
+              <View style={[styles.streakCard, { backgroundColor: colors.secondary }]}>
+                <Text style={styles.streakEmoji}>⚡</Text>
+                <Text style={[typography.display, { color: colors.onPrimary }]}>{profile.longestStreak}</Text>
+                <Text style={[typography.caption, { color: colors.onPrimary, marginTop: 2, opacity: 0.85 }]}>
+                  Longest Streak
+                </Text>
+              </View>
+            </View>
+            <Text style={[typography.label, { color: colors.textMuted }, styles.sectionLabel]}>
+              BADGES EARNED ({profile.badges.length})
+            </Text>
+          </>
+        }
         ListEmptyComponent={
-          <Text style={styles.empty}>
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg, paddingHorizontal: spacing.lg }]}>
             No badges yet — keep attending, submitting homework, and taking tests to earn some!
           </Text>
         }
         renderItem={({ item }) => (
-          <View style={styles.badgeCard}>
+          <Card style={styles.badgeCard}>
             <Text style={styles.badgeIcon}>{item.icon}</Text>
-            <Text style={styles.badgeLabel}>{item.label}</Text>
-            <Text style={styles.badgeDate}>{new Date(item.earnedAt).toLocaleDateString()}</Text>
-          </View>
+            <Text style={[typography.label, { color: colors.text, textAlign: 'center' }]}>{item.label}</Text>
+            <Text style={[typography.caption, { color: colors.textFaint, marginTop: spacing.xs }]}>
+              {new Date(item.earnedAt).toLocaleDateString()}
+            </Text>
+          </Card>
         )}
       />
     </View>
@@ -68,29 +84,12 @@ export default function AchievementsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  loading: { textAlign: 'center', marginTop: 40, color: '#9ca3af' },
-  streakRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  streakCard: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
-  streakEmoji: { fontSize: 28, marginBottom: 6 },
-  streakNumber: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
-  streakLabel: { fontSize: 12, color: '#f3f4f6', marginTop: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
-  badgeCard: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  badgeIcon: { fontSize: 32, marginBottom: 8 },
-  badgeLabel: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  badgeDate: { fontSize: 10, color: '#9ca3af', marginTop: 4 },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 20, paddingHorizontal: 20 },
+  list: { padding: spacing.lg, gap: spacing.md },
+  streakRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  streakCard: { flex: 1, borderRadius: radius.lg, padding: spacing.xl, alignItems: 'center' },
+  streakEmoji: { fontSize: 28, marginBottom: spacing.xs },
+  sectionLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
+  badgeRow: { gap: spacing.md },
+  badgeCard: { flex: 1, alignItems: 'center' },
+  badgeIcon: { fontSize: 32, marginBottom: spacing.sm },
 });

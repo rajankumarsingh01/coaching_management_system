@@ -15,10 +15,10 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../src/context/AuthContext';
-import { useBranding } from '../../src/context/BrandingContext';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { Button } from '../../src/components/ui/Button';
 import { spacing, typography, radius } from '../../src/theme/tokens';
+import { PLATFORM } from '../../src/constants/platform';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -27,7 +27,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const { branding } = useBranding();
   const { t } = useTranslation();
   const colors = useThemeColors();
 
@@ -73,23 +72,18 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Brand panel — institute identity lives in confident typography here,
-            not a logo image. */}
+        {/* PLATFORM identity here — never a specific institute's branding.
+            We don't know which institute this user belongs to until AFTER
+            they log in, so this panel is fixed/global, not theme-driven. */}
         <LinearGradient
-          colors={[colors.primary, colors.secondary]}
+          colors={['#4338CA', '#6366F1']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.brandPanel}
         >
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-            <Text style={styles.brandName} numberOfLines={2}>
-              {branding?.displayName || 'Coaching Platform'}
-            </Text>
-            {branding?.tagline ? (
-              <Text style={styles.brandTagline} numberOfLines={2}>
-                {branding.tagline}
-              </Text>
-            ) : null}
+            <Text style={styles.brandName}>{PLATFORM.name}</Text>
+            <Text style={styles.brandTagline}>{PLATFORM.tagline}</Text>
           </Animated.View>
         </LinearGradient>
 
@@ -159,22 +153,11 @@ const styles = StyleSheet.create({
     padding: spacing.xxl,
     paddingBottom: spacing.xxxl,
   },
-  brandName: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-  },
-  brandTagline: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: spacing.xs,
-  },
+  brandName: { fontSize: 30, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
+  brandTagline: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)', marginTop: spacing.xs },
   formSheet: {
     flex: 1,
     marginTop: -spacing.xxl,
-    backgroundColor: 'transparent',
     paddingHorizontal: spacing.xxl,
     paddingTop: spacing.xl,
   },
@@ -194,9 +177,5 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: spacing.sm,
   },
-  input: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    fontSize: 15,
-  },
+  input: { flex: 1, paddingVertical: spacing.md, fontSize: 15 },
 });

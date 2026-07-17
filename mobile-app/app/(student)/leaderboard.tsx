@@ -2,41 +2,58 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import axiosInstance from '../../src/api/axiosInstance';
+import { useBatch } from '../../src/context/BatchContext';
+import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
+import { Card } from '../../src/components/ui/Card';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { spacing, typography } from '../../src/theme/tokens';
 
 type Entry = { name: string; testsCount: number; averagePercentage: number };
 
 export default function LeaderboardScreen() {
   const { batchId } = useLocalSearchParams<{ batchId: string }>();
+  const { selectedBatch } = useBatch();
+  const colors = useThemeColors();
   const [leaderboard, setLeaderboard] = useState<Entry[]>([]);
+
+  // Falls back to the globally-selected batch when opened without a
+  // batchId param (dashboard / profile menu) instead of showing empty.
+  const effectiveBatchId = batchId || selectedBatch?._id;
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      if (!batchId) return;
-      const { data } = await axiosInstance.get(`/results/leaderboard/${batchId}`);
+      if (!effectiveBatchId) return;
+      const { data } = await axiosInstance.get(`/results/leaderboard/${effectiveBatchId}`);
       setLeaderboard(data.data);
     };
     fetchLeaderboard();
-  }, [batchId]);
+  }, [effectiveBatchId]);
 
   const getMedal = (idx: number) => (idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Leaderboard</Text>
-
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScreenHeader title="Leaderboard" tagline={selectedBatch ? selectedBatch.name : undefined} />
       <FlatList
         data={leaderboard}
         keyExtractor={(item, idx) => item.name + idx}
-        ListEmptyComponent={<Text style={styles.empty}>No results yet.</Text>}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <Text style={[typography.body, { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl }]}>
+            No results yet.
+          </Text>
+        }
         renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.rank}>{getMedal(index)}</Text>
-            <View style={styles.info}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.sub}>{item.testsCount} tests taken</Text>
+          <Card style={styles.row} padded={false}>
+            <View style={styles.rowInner}>
+              <Text style={[typography.h2, { color: colors.text, width: 40 }]}>{getMedal(index)}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.bodyMedium, { color: colors.text }]}>{item.name}</Text>
+                <Text style={[typography.caption, { color: colors.textMuted }]}>{item.testsCount} tests taken</Text>
+              </View>
+              <Text style={[typography.h2, { color: colors.primary }]}>{item.averagePercentage}%</Text>
             </View>
-            <Text style={styles.percentage}>{item.averagePercentage}%</Text>
-          </View>
+          </Card>
         )}
       />
     </View>
@@ -44,19 +61,7 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  rank: { fontSize: 18, fontWeight: 'bold', width: 40 },
-  info: { flex: 1 },
-  name: { fontSize: 14, fontWeight: '600' },
-  sub: { fontSize: 12, color: '#6b7280' },
-  percentage: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
-  empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40 },
+  list: { padding: spacing.lg },
+  row: { marginBottom: spacing.sm },
+  rowInner: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
 });

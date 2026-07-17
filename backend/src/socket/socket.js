@@ -36,13 +36,14 @@ const initSocket = (httpServer) => {
 
   // Handshake-level auth — same JWT access token used for REST APIs.
   // Client sends it as: io(URL, { auth: { token: accessToken } })
-  io.use((socket, next) => {
+io.use((socket, next) => {
     try {
       const token =
         socket.handshake.auth?.token ||
         socket.handshake.headers?.authorization?.split(' ')[1];
 
       if (!token) {
+        logger.error(`🔌 Socket auth failed: no token (socket=${socket.id})`);
         return next(new Error('Authentication token missing'));
       }
 
@@ -50,6 +51,7 @@ const initSocket = (httpServer) => {
       socket.user = decoded; // { id, role, instituteId, batchIds }
       next();
     } catch (err) {
+      logger.error(`🔌 Socket auth failed: ${err.message} (socket=${socket.id})`);
       next(new Error('Invalid or expired token'));
     }
   });

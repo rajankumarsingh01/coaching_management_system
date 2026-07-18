@@ -43,4 +43,12 @@ module.exports = {
   openrouter: {
     apiKey: process.env.OPENROUTER_API_KEY || '',
   },
+// NEW — Resend (email notifications). Required list me deliberately
+  // nahi daala — agar setup na ho, app crash nahi hogi, bas email silently
+  // skip ho jayegi aur push notification jaisa normal chalta rahega.
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || '',
+    fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+  },
+
 };

@@ -52,7 +52,7 @@ const login = async (email, password) => {
 
   await userRepository.updateRefreshToken(user._id, refreshToken);
 
-  return {
+return {
     accessToken,
     refreshToken,
     user: {
@@ -61,6 +61,7 @@ const login = async (email, password) => {
       email: user.email,
       role: user.role,
       instituteId: user.instituteId,
+      avatarUrl: user.avatarUrl,   // 👈 NEW — login hote hi avatar bhi mil jaaye, extra call na lagani pade
     },
   };
 };

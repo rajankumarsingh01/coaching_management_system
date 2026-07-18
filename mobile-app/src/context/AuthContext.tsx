@@ -3,7 +3,14 @@ import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import axiosInstance from '../api/axiosInstance';
 
-type User = { id: string; name: string; email: string; role: string; instituteId?: string } | null;
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  instituteId?: string;
+  avatarUrl?: string | null;   // NEW
+} | null;
 
 type AuthContextType = {
   user: User;
@@ -11,6 +18,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
+  updateUser: (updates: Partial<NonNullable<User>>) => void;   // NEW
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,14 +67,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync('refreshToken');
     await SecureStore.deleteItemAsync('user');
 
-    // Session clear hote hi seedha login page pe redirect — router.replace()
-    // taaki back button se wapas protected (admin/teacher/student/parent)
-    // stack me na ja sake.
     router.replace('/(auth)/login');
   };
 
+  // NEW — avatar upload/delete jaise chhote profile updates ke baad context
+  // + persisted session dono ko turant sync karne ke liye (poora login()
+  // dobara chalaye bina).
+  const updateUser = (updates: Partial<NonNullable<User>>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const merged = { ...prev, ...updates };
+      SecureStore.setItemAsync('user', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

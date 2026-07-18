@@ -23,12 +23,15 @@ const allowedOrigins = [
 const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
+      // Origin check yahan REST wale jitna strict nahi rakha — real security
+      // JWT auth middleware (niche io.use) handle karta hai. Mobile app
+      // (Expo/React Native) kabhi-kabhi ek Origin header bhej deta hai
+      // (Metro bundler ka address), jo admin-web ke allowedOrigins list me
+      // nahi hoga — usse reject karna galat hai, isliye sirf origin ko log
+      // karke sabko allow kar rahe hain.
       origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by Socket.IO CORS'));
-        }
+        logger.info(`🔌 Socket handshake origin: ${origin || '(none)'}`);
+        callback(null, true);
       },
       credentials: true,
     },

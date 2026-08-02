@@ -4,6 +4,7 @@ import { changeLanguage } from '../../src/i18n/i18n';
 import { ScreenHeader } from '../../src/components/ui/ScreenHeader';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { spacing, radius, typography } from '../../src/theme/tokens';
+import { router } from 'expo-router/build/exports';
 
 export default function SettingsScreen() {
   const { i18n } = useTranslation();
@@ -38,6 +39,16 @@ export default function SettingsScreen() {
           >
             English
           </Text>
+
+          <Text style={[typography.label, { color: colors.textMuted }, styles.sectionLabel, { marginTop: spacing.xl }]}>
+          ACCOUNT
+        </Text>
+        <TouchableOpacity
+          style={[styles.option, { borderColor: colors.border }]}
+          onPress={() => router.push('/(student)/change-password')}
+        >
+          <Text style={[typography.body, { color: colors.text }]}>Change Password</Text>
+        </TouchableOpacity>
         </TouchableOpacity>
 
         <TouchableOpacity

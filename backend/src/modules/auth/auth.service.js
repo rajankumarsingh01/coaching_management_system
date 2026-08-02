@@ -1,16 +1,20 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const ApiError = require('../../utils/ApiError');
 const userRepository = require('../user/user.repository');
-const instituteRepository = require('../institute/institute.repository');   // 👈 NEW
-const { ROLES } = require('../../config/constants');                        // 👈 NEW
+const instituteRepository = require('../institute/institute.repository');
+const { ROLES } = require('../../config/constants');
+const { sendEmail } = require('../../utils/emailService');
 const {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } = require('../../utils/token');
 
+const SALT_ROUNDS = 10;
+const OTP_EXPIRY_MINUTES = 10;
 
-
+const hashOtp = (otp) => crypto.createHash('sha256').update(otp).digest('hex');
 
 const login = async (email, password) => {
   const user = await userRepository.findByEmail(email, true);
@@ -23,16 +27,10 @@ const login = async (email, password) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
-  // Admin can deactivate a user (e.g. student left, teacher no longer
-  // employed) without deleting their account/history. This check was
-  // missing — the model already had isActive, but login never read it,
-  // so a deactivated user could still log in normally.
   if (!user.isActive) {
     throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
   }
 
-  // NEW — blocked institute ka koi bhi non-super_admin user login nahi kar payega,
-  // generic invalid-credentials error ki jagah clear message milega.
   if (user.role !== ROLES.SUPER_ADMIN) {
     const institute = await instituteRepository.findById(user.instituteId).select('isActive');
     if (!institute || institute.isActive === false) {
@@ -46,13 +44,12 @@ const login = async (email, password) => {
     instituteId: user.instituteId,
     batchIds: user.batchIds,
   };
-  // ...baaki code same rahega
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
   await userRepository.updateRefreshToken(user._id, refreshToken);
 
-return {
+  return {
     accessToken,
     refreshToken,
     user: {
@@ -61,12 +58,10 @@ return {
       email: user.email,
       role: user.role,
       instituteId: user.instituteId,
-      avatarUrl: user.avatarUrl,   // 👈 NEW — login hote hi avatar bhi mil jaaye, extra call na lagani pade
+      avatarUrl: user.avatarUrl,
     },
   };
 };
-
-
 
 const refreshAccessToken = async (token) => {
   let decoded;
@@ -81,15 +76,10 @@ const refreshAccessToken = async (token) => {
     throw new ApiError(401, 'Refresh token does not match');
   }
 
-
-  // Same isActive check as login — a deactivated user's existing refresh
-  // token shouldn't silently keep minting new access tokens.
   if (!user.isActive) {
     throw new ApiError(403, 'This account has been deactivated. Contact your institute admin.');
   }
 
-  // NEW — same institute-block check yahan bhi, warna blocked institute ka
-  // user apna existing refresh token use karke naya access token bana sakta hai
   if (user.role !== ROLES.SUPER_ADMIN) {
     const institute = await instituteRepository.findById(user.instituteId).select('isActive');
     if (!institute || institute.isActive === false) {
@@ -112,4 +102,74 @@ const logout = async (userId) => {
   await userRepository.updateRefreshToken(userId, null);
 };
 
-module.exports = { login, refreshAccessToken, logout };
+// NEW — logged-in user apna password khud badalta hai, current password
+// verify karne ke baad. Success pe refreshToken bhi clear kar dete hain
+// taaki dusri saari devices/sessions se force logout ho jaye — security
+// best practice jab password change hota hai.
+const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await userRepository.findById(userId).select('+password');
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) throw new ApiError(401, 'Current password is incorrect');
+
+  user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  user.refreshToken = null;
+  await user.save();
+};
+
+// NEW — email pe 6-digit OTP bhejta hai. Jaan-boojhkar user exist kare ya
+// na kare, dono cases me same success response deta hai (controller me) —
+// warna is endpoint se attacker pata laga sakta hai ki koi email registered
+// hai ya nahi (user enumeration attack).
+const forgotPassword = async (email) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) return; // silently no-op — controller still returns generic success
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otpHash = hashOtp(otp);
+  const expires = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
+  await userRepository.updateById(user._id, {
+    resetPasswordOtpHash: otpHash,
+    resetPasswordExpires: expires,
+  });
+
+  await sendEmail({
+    to: user.email,
+    subject: 'Your password reset code',
+    body: `Your password reset code is <strong style="font-size:20px;letter-spacing:2px;">${otp}</strong>. It expires in ${OTP_EXPIRY_MINUTES} minutes. If you didn't request this, you can safely ignore this email.`,
+  });
+};
+
+// NEW — OTP verify karke naya password set karta hai
+const resetPassword = async (email, otp, newPassword) => {
+  const user = await userRepository.findByEmail(email).select('+resetPasswordOtpHash +resetPasswordExpires');
+
+  if (!user || !user.resetPasswordOtpHash || !user.resetPasswordExpires) {
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+
+  if (user.resetPasswordExpires.getTime() < Date.now()) {
+    throw new ApiError(400, 'Reset code has expired. Please request a new one.');
+  }
+
+  if (hashOtp(otp) !== user.resetPasswordOtpHash) {
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+
+  user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  user.resetPasswordOtpHash = null;
+  user.resetPasswordExpires = null;
+  user.refreshToken = null;
+  await user.save();
+};
+
+module.exports = {
+  login,
+  refreshAccessToken,
+  logout,
+  changePassword,   // 👈 new export
+  forgotPassword,   // 👈 new export
+  resetPassword,    // 👈 new export
+};

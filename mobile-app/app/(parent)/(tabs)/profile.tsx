@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenHeader } from '../../../src/components/ui/ScreenHeader';
 import { PressableCard } from '../../../src/components/ui/Card';
@@ -31,9 +31,9 @@ export default function ParentProfileScreen() {
     updateUser({ avatarUrl: url });
   };
 
-  const menuItems = [
+const menuItems = [
     { label: 'About Institute', icon: 'school-outline' as const, onPress: () => {} },
-    { label: 'Settings', icon: 'settings-outline' as const, onPress: () => {} },
+    { label: 'Change Password', icon: 'lock-closed-outline' as const, onPress: () => router.push('/(parent)/change-password') },
   ];
 
   return (

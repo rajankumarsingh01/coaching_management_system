@@ -130,6 +130,13 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={{ alignSelf: 'flex-end', marginBottom: spacing.sm }}
+          >
+            <Text style={[typography.label, { color: colors.primary }]}>Forgot password?</Text>
+          </TouchableOpacity>
+
           <Button
             label={t('auth.loginButton')}
             onPress={handleLogin}

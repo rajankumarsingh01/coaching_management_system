@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../../src/i18n/i18n';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { spacing, radius, typography } from '../../src/theme/tokens';
+import { router } from 'expo-router/build/exports';
 
 export default function AdminSettingsScreen() {
   const { i18n } = useTranslation();
@@ -47,6 +48,17 @@ export default function AdminSettingsScreen() {
           हिंदी
         </Text>
       </TouchableOpacity>
+
+<Text style={[typography.label, { color: colors.textMuted, marginTop: spacing.xl, marginBottom: spacing.md }]}>
+        Account
+      </Text>
+      <TouchableOpacity
+        style={[styles.option, { borderColor: colors.border, backgroundColor: colors.background }]}
+        onPress={() => router.push('/(teacher)/change-password')}
+      >
+        <Text style={[typography.body, { color: colors.text }]}>Change Password</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }

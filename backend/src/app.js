@@ -14,7 +14,8 @@ app.use(helmet());
 // isliye specific origin(s) allow kar rahe hain
 const allowedOrigins = [
   'http://localhost:5173',
-  process.env.CLIENT_URL, // prod frontend URL (Vercel/Render wagera)
+  // CLIENT_URL comma-separated ho sakta hai (jaise: Vercel prod URL + custom domain)
+  ...(process.env.CLIENT_URL || '').split(',').map((u) => u.trim()),
 ].filter(Boolean);
 
 app.use(cors({

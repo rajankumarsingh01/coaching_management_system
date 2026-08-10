@@ -7,7 +7,7 @@ import { Button } from '../../src/components/ui/Button';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { spacing, typography, radius } from '../../src/theme/tokens';
 
-type Teacher = { _id: string; name: string; email: string };
+type Teacher = { id: string; name: string; email: string };
 
 const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -71,11 +71,11 @@ export default function CreateSalaryScreen() {
       ) : (
         <View style={{ gap: spacing.sm }}>
           {teachers.map((t) => {
-            const active = t._id === selectedTeacherId;
+            const active = t.id === selectedTeacherId;
             return (
               <PressableCard
-                key={t._id}
-                onPress={() => setSelectedTeacherId(t._id)}
+                key={t.id}
+                onPress={() => setSelectedTeacherId(t.id)}
                 style={[
                   styles.teacherRow,
                   { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primaryMuted : colors.background },

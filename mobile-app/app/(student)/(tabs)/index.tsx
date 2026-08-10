@@ -20,7 +20,7 @@ export default function StudentHome() {
   const [homeworkPending, setHomeworkPending] = useState<number | null>(null);
   const [weakTopicsCount, setWeakTopicsCount] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const { user, logout } = useAuth();
+ const { user } = useAuth();
   const { branding } = useBranding();
   const { selectedBatch } = useBatch();
   const colors = useThemeColors();
@@ -70,12 +70,10 @@ export default function StudentHome() {
       style={{ flex: 1, backgroundColor: colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
-      <ScreenHeader
+       <ScreenHeader
         title={`${branding?.displayName || 'Welcome'}, ${user?.name || ''}`}
         tagline={branding?.tagline}
         bannerUrl={branding?.bannerImageUrl}
-        rightLabel="Logout"
-        onRightPress={logout}
       />
 
       <View style={styles.statRow}>

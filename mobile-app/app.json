@@ -1,20 +1,22 @@
 {
   "expo": {
-    "name": "Kaksha",
-    "slug": "kaksha",
+    "name": "Sankalp",
+    "slug": "sankalp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "kaksha",
+    "scheme": "sankalp",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rajankumarsingh.kaksha"
+      "bundleIdentifier": "com.rajankumarsingh.sankalp"
     },
     "android": {
-      "package": "com.rajankumarsingh.kaksha",
-      "permissions": ["NOTIFICATIONS"],
+      "package": "com.rajankumarsingh.sankalp",
+      "permissions": [
+        "NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-foreground.png",
         "backgroundImage": "./assets/adaptive-icon-background.png",
@@ -39,6 +41,12 @@
           "backgroundColor": "#ffffff"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2a0f2f01-fa70-42e6-bdb7-394c66957dfa"
+      }
+    }
   }
 }

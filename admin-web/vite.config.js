@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   server: { port: 5173 },
   optimizeDeps: {
-    include: ['lottie-react', 'lottie-web'],
+    include: ['lottie-web'],
   },
 });

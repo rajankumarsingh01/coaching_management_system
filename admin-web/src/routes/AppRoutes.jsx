@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Login from '../pages/auth/Login';
 import Dashboard from '../pages/dashboard/Dashboard';
 import CreateUser from '../pages/users/CreateUser';
@@ -26,7 +27,15 @@ import HomeworkSubmissions from '../pages/homework/HomeworkSubmissions';
 import CalendarView from '../pages/calendar/CalendarView';
 import CreateEvent from '../pages/calendar/CreateEvent';
 
+const RootRedirect = () => {
+  const { user, accessToken } = useAuth();
+  return <Navigate to={accessToken && user ? '/dashboard' : '/login'} replace />;
+};
+
 const AppRoutes = () => {
+
+
+  
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -243,7 +252,7 @@ const AppRoutes = () => {
   }
 />
 
-      <Route path="/" element={<Login />} />
+     <Route path="/" element={<RootRedirect />} />
     </Routes>
   );
 };

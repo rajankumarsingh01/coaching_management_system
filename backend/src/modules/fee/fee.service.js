@@ -17,6 +17,18 @@ const { generateReceiptPDF } = require('../../utils/generateReceipt');
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
+
+
+
+// Parent ko sirf apne linked bachche ki fee pe action lene do
+const assertParentOwnsStudent = async (requester, studentId) => {
+  if (requester.role !== ROLES.PARENT) return;
+  const student = await userRepository.findById(studentId);
+  if (!student || String(student.parentId) !== String(requester.id)) {
+    throw new ApiError(403, 'You can only act on your own child\'s fee records');
+  }
+};
+
 // Payment confirm hone ke baad ka common realtime emit — markFeePaid, verifyPayment
 // aur handleWebhook teeno yahi function call karenge, taki emit logic ek hi jagah rahe.
 // Batch-wide broadcast NAHI kiya — fee financial data hai, sirf concerned log hi dekhein.
@@ -120,10 +132,12 @@ const createRazorpayOrder = async (requester, feeId) => {
     throw new ApiError(404, 'Fee record not found');
   }
 
-  // only the fee's own student can pay for it
+  // only the fee's own student — or their linked parent — can pay for it
   if (requester.role === ROLES.STUDENT && String(fee.studentId) !== String(requester.id)) {
     throw new ApiError(403, 'You can only pay your own fees');
   }
+  await assertParentOwnsStudent(requester, fee.studentId);
+
 
   if (fee.status === FEE_STATUS.PAID) {
     throw new ApiError(400, 'This fee is already paid');
@@ -157,9 +171,11 @@ const verifyPayment = async (requester, { feeId, razorpay_order_id, razorpay_pay
     throw new ApiError(404, 'Fee record not found');
   }
 
-  if (fee.razorpayOrderId !== razorpay_order_id) {
+ if (fee.razorpayOrderId !== razorpay_order_id) {
     throw new ApiError(400, 'Order ID mismatch');
   }
+
+  await assertParentOwnsStudent(requester, fee.studentId);
 
   const expectedSignature = crypto
     .createHmac('sha256', env.razorpay.keySecret)
@@ -228,7 +244,8 @@ const getBatchFees = async (requester, batchId) => {
 };
 
 const getStudentFees = async (requester, studentId) => {
- const filter = getTenantFilter(requester);
+  const filter = getTenantFilter(requester);
+  await assertParentOwnsStudent(requester, studentId);
 
   await feeRepository.markOverdue(filter);
   return feeRepository.findByStudent(studentId, filter);

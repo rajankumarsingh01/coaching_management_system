@@ -32,11 +32,11 @@ router.patch(
   feeController.markFeePaid
 );
 
-router.post('/:id/create-order', roleMiddleware(ROLES.STUDENT, ROLES.ADMIN), feeController.createOrder);
+router.post('/:id/create-order', roleMiddleware(ROLES.STUDENT, ROLES.PARENT, ROLES.ADMIN), feeController.createOrder);
 
 router.post(
   '/verify-payment',
-  roleMiddleware(ROLES.STUDENT, ROLES.ADMIN),
+  roleMiddleware(ROLES.STUDENT, ROLES.PARENT, ROLES.ADMIN),
   validate(verifyPaymentSchema),
   feeController.verifyPayment
 );

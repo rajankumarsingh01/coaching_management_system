@@ -2,9 +2,8 @@
 //
 // Login screen ka onboarding character.
 // - idle/thinking/success/error: seedha Lottie JSON swap
-// - entry: walk-cycle lottie (jisme character khud bag/briefcase le ke
-//   chal raha hai) ko RN Animated se left→center translate karte hain,
-//   khatam hone pe parent ko onFinish() call karke batate hain.
+// - entry: walk-cycle lottie ko RN Animated se left→center translate karte
+//   hain, khatam hone pe parent ko onFinish() call karke batate hain.
 
 import { memo, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
@@ -19,17 +18,17 @@ const SOURCES: Record<Exclude<CharacterState, 'entry'>, any> = {
   error: require('../../assets/lottie/character-error.json'),
 };
 
-// Walking-with-bag lottie — character khud briefcase/bag carry karta hai,
-// isliye alag se briefcase draw karne ki zaroorat nahi.
 const WALK_SOURCE = require('../../assets/lottie/character-walk.json');
 
 const LOOPING_STATES: CharacterState[] = ['idle', 'thinking'];
 
+// Entry sequence ki timing — yahin se poori speed control hoti hai.
+const WALK_DURATION_MS = 2200; // pehle 1100 tha — ab dugna, walk poora dikhega
+const SETTLE_PAUSE_MS = 500;   // walk khatam hone ke baad thoda ruk ke form reveal
+
 type Props = {
   state: CharacterState;
   size?: number;
-  // sirf 'entry' state ke liye — walk-in khatam hote hi call hota hai,
-  // taaki parent (login.tsx) form ko fade-in kar sake.
   onFinish?: () => void;
 };
 
@@ -44,18 +43,16 @@ function AnimatedCharacterBase({ state, size = 180, onFinish }: Props) {
       lottieRef.current?.play();
       return;
     }
-    // Entry sequence: off-screen (left) se chal ke center tak aao, phir
-    // thoda ruk ke parent ko batao khatam ho gaya.
     setWalking(true);
     translateX.setValue(-size);
     Animated.timing(translateX, {
       toValue: 0,
-      duration: 1100,
+      duration: WALK_DURATION_MS,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
       setWalking(false);
-      setTimeout(() => onFinish?.(), 350);
+      setTimeout(() => onFinish?.(), SETTLE_PAUSE_MS);
     });
   }, [state]);
 
@@ -88,8 +85,6 @@ function AnimatedCharacterBase({ state, size = 180, onFinish }: Props) {
   );
 }
 
-// memo: sirf `state`/`size` badalne pe re-render, parent (LoginScreen) ke
-// baaki re-renders (email/password typing) ignore honge.
 export const AnimatedCharacter = memo(AnimatedCharacterBase);
 
 const styles = StyleSheet.create({

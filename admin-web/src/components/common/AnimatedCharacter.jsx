@@ -1,12 +1,8 @@
 // src/components/common/AnimatedCharacter.jsx
 //
 // Login screen ka onboarding character.
-// NOTE: `lottie-react` (React wrapper) jaan-bujh kar use nahi kiya — us
-// package ka Vite/Rollup production build ke saath CJS/ESM export interop
-// tootta hai (React error #130, white screen on Vercel, dev me theek chalta
-// tha). Iski jagah `lottie-web` seedha use kar rahe hain — ye plain JS
-// function hai (`loadAnimation`), koi React-component export nahi, isliye
-// ye interop bug apply hi nahi hota.
+// NOTE: `lottie-react` ki jagah `lottie-web` seedha use ho raha hai
+// (Vite/Rollup production build interop bug se bachne ke liye).
 
 import { useEffect, useRef, useState, memo } from 'react';
 import * as LottieWebModule from 'lottie-web';
@@ -28,9 +24,10 @@ const SOURCES = {
 
 const LOOPING_STATES = ['entry', 'idle', 'thinking'];
 
-// Reusable hook — diye gaye container div me lottie animation load/switch/
-// cleanup karta hai. State badalte hi purani animation destroy ho ke nayi
-// load hoti hai.
+// Entry sequence ki timing — yahin se poori speed control hoti hai.
+const WALK_DURATION_MS = 2200; // pehle 1100 tha — ab dugna
+const SETTLE_PAUSE_MS = 500;   // walk khatam hone ke baad thoda ruk ke form reveal
+
 function useLottie(containerRef, animationData, loop) {
   useEffect(() => {
     if (!containerRef.current || !animationData) return undefined;
@@ -54,8 +51,6 @@ function AnimatedCharacterBase({ state, size = 160, onFinish }) {
   useEffect(() => {
     if (state !== 'entry') return undefined;
     setEntered(false);
-    // Ek frame chhod ke translate trigger karo, warna browser starting aur
-    // ending style ko same maan ke transition skip kar sakta hai.
     const raf1 = requestAnimationFrame(() => {
       requestAnimationFrame(() => setEntered(true));
     });
@@ -67,13 +62,17 @@ function AnimatedCharacterBase({ state, size = 160, onFinish }) {
       <div style={{ width: size, height: size }} className="flex items-center justify-center">
         <div
           onTransitionEnd={() => {
-            if (entered) onFinish?.();
+            if (entered) {
+              // Walk khatam hote hi turant reveal na ho, thoda ruk jaaye —
+              // isse form ka aana zyada natural lagta hai.
+              setTimeout(() => onFinish?.(), SETTLE_PAUSE_MS);
+            }
           }}
           style={{
             width: size * 0.75,
             height: size * 0.75,
             transform: entered ? 'translateX(0)' : `translateX(-${size}px)`,
-            transition: 'transform 1100ms cubic-bezier(0.33,1,0.68,1)',
+            transition: `transform ${WALK_DURATION_MS}ms cubic-bezier(0.33,1,0.68,1)`,
           }}
         >
           <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
@@ -89,6 +88,4 @@ function AnimatedCharacterBase({ state, size = 160, onFinish }) {
   );
 }
 
-// memo: sirf `state`/`size` badalne pe re-render, parent (Login) ke baaki
-// re-renders (email/password typing) ignore honge.
 export const AnimatedCharacter = memo(AnimatedCharacterBase);

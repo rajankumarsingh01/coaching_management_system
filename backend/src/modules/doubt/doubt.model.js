@@ -7,6 +7,7 @@ const doubtSchema = new mongoose.Schema(
     subject: { type: String, default: '' },
     question: { type: String, required: true },
     answer: { type: String, required: true },
+    imageUrl: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -50,7 +50,7 @@ export default function StudentLecturesScreen() {
     fetchLectures();
   }, [selectedBatch]);
 
-  if (activeLecture) {
+ if (activeLecture) {
     const videoId = getVideoId(activeLecture.youtubeUrl);
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, padding: spacing.lg }}>
@@ -64,6 +64,23 @@ export default function StudentLecturesScreen() {
               javaScriptEnabled
               domStorageEnabled
               originWhitelist={['*']}
+              setSupportMultipleWindows={false}
+              onShouldStartLoadWithRequest={(request) => {
+                const { url } = request;
+                if (url.startsWith('https://coachingapp.local') || url === 'about:blank') {
+                  return true;
+                }
+                const allowedHosts = ['www.youtube.com', 'youtube.com', 'youtube-nocookie.com'];
+                try {
+                  const { hostname } = new URL(url);
+                  if (allowedHosts.some((h) => hostname === h || hostname.endsWith(`.${h}`))) {
+                    return true;
+                  }
+                } catch {
+                  // intent://, vnd.youtube:// jaise scheme yahan fail honge — block ho jayenge
+                }
+                return false;
+              }}
             />
           ) : (
             <Text style={[typography.body, { color: colors.danger, textAlign: 'center', marginTop: spacing.xl }]}>
@@ -79,7 +96,7 @@ export default function StudentLecturesScreen() {
         </Text>
       </View>
     );
-  }
+  } 
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

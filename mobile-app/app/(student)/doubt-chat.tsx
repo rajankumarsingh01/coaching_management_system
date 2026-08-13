@@ -7,7 +7,8 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
+KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   Animated,
@@ -326,6 +327,7 @@ function SkeletonLoader() {
 
 export default function DoubtChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [androidKeyboardHeight, setAndroidKeyboardHeight] = useState(0);
   const [input, setInput] = useState('');
   const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
   const [sending, setSending] = useState(false);
@@ -369,6 +371,21 @@ export default function DoubtChatScreen() {
       }
     };
     fetchHistory();
+  }, []);
+
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setAndroidKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setAndroidKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   const limitReached = remaining !== null && remaining <= 0;
@@ -538,8 +555,8 @@ export default function DoubtChatScreen() {
         </View>
       </View>
 
-    <KeyboardAvoidingView
-        style={styles.flex}
+   <KeyboardAvoidingView
+        style={[styles.flex, Platform.OS === 'android' && { marginBottom: androidKeyboardHeight }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >

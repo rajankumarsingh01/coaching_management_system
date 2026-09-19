@@ -45,6 +45,11 @@ const getBatchWeakTopics = catchAsync(async (req, res) => {
   res.status(200).json(new ApiResponse(200, data, 'Batch weak topics fetched successfully'));
 });
 
+const getMyStudyPlan = catchAsync(async (req, res) => {
+  const data = await resultService.getMyStudyPlan(getRequester(req));
+  res.status(200).json(new ApiResponse(200, data, 'Study plan generated successfully'));
+});
+
 
 module.exports = {
   submitTest,
@@ -55,4 +60,5 @@ module.exports = {
   getStudentResults,    
   getStudentWeakTopics,  
     getBatchWeakTopics,
+    getMyStudyPlan,
 };

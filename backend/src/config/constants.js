@@ -1,3 +1,8 @@
+// Object.freeze(obj) — is object ko "freeze" (jama) kar deta hai, matlab ab isko koi bhi change nahi kar sakta:
+
+
+
+
 const ROLES = Object.freeze({
   SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',

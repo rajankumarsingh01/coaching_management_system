@@ -4,6 +4,10 @@ const testRepository = require('../test/test.repository');
 const { ROLES } = require('../../config/constants');
 const gamificationService = require('../gamification/gamification.service');
 
+
+const agenticService = require('../../config/agenticService.config');
+const userRepository = require('../user/user.repository');
+
 const { getTenantFilter } = require('../../utils/tenantFilter');
 const { emitToBatch, emitToInstituteRole } = require('../../socket/socket');
 const { assertCanAccessBatch, assertCanAccessStudent } = require('../../utils/ownershipGuard');
@@ -170,13 +174,32 @@ const getBatchWeakTopics = async (requester, batchId) => {
   return { allTopics: topics, weakTopics };
 };
 
+
+
+
+// Student ke apne weak topics se AI study plan generate karta hai
+const getMyStudyPlan = async (requester) => {
+  const { weakTopics, allTopics } = await getWeakTopics(requester, requester.id);
+  const student = await userRepository.findById(requester.id);
+
+  const { plan } = await agenticService.generateStudyPlan({
+    studentName: student.name,
+    weakTopics,
+    allTopics,
+  });
+
+  return { plan, weakTopics, allTopics };
+};
+
+
 module.exports = {
   submitTest,
   getTestResults,
   getMyResults,
   getLeaderboard,
   getWeakTopics,
-  getStudentResults,      
-  getStudentWeakTopics, 
-  getBatchWeakTopics, 
+  getStudentResults,
+  getStudentWeakTopics,
+  getBatchWeakTopics,
+  getMyStudyPlan,   // NEW
 };

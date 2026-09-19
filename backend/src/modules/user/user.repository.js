@@ -14,6 +14,7 @@ const findById = (id, withRefreshToken = false) => {
   return query;
 };
 
+
 // NEW — scoped lookup, so an admin can never touch a user outside their institute
 const findByIdScoped = (id, filter = {}) => User.findOne({ _id: id, ...filter });
 

@@ -8,7 +8,7 @@ const validate = (schema) => (req, res, next) => {
   });
 
   if (!result.success) {
-    const errors = result.error.errors.map((e) => ({
+    const errors = result.error.issues.map((e) => ({   // 👈 .errors -> .issues
       field: e.path.join('.'),
       message: e.message,
     }));

@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const analyticsRoutes = require('../modules/analytics/analytics.routes');
+
+
 router.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'API is healthy' });
 });
+
+
+
 
 router.use('/auth', require('../modules/auth/auth.routes'));
 router.use('/users', require('../modules/user/user.routes'));
@@ -25,5 +30,7 @@ router.use('/presence', require('../modules/presence/presence.routes'));
 router.use('/leads', require('../modules/lead/lead.routes'));
 router.use('/doubts', require('../modules/doubt/doubt.routes'));
 router.use('/analytics', analyticsRoutes);
+
+router.use('/parent-reports', require('../modules/parentReport/parentReport.routes'));
 
 module.exports = router;

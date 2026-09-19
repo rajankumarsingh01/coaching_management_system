@@ -52,4 +52,6 @@ router.get(
   resultController.getBatchWeakTopics
 );
 
+router.get('/study-plan/me', roleMiddleware(ROLES.STUDENT), resultController.getMyStudyPlan);
+
 module.exports = router;

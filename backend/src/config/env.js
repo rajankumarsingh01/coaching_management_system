@@ -51,4 +51,9 @@ module.exports = {
     fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
   },
 
+    // NEW — Python Agentic Service (FastAPI + LangChain/LangGraph)
+  agenticService: {
+    baseUrl: process.env.AGENTIC_SERVICE_URL || 'http://localhost:8001',
+  },
+
 };

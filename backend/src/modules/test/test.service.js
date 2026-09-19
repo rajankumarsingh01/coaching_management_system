@@ -12,6 +12,7 @@ const resultRepository = require('../result/result.repository');
 const gemini = require('../../config/openrouter.config');
 const aiUsageService = require('../aiUsage/aiUsage.service');
 const env = require('../../config/env');
+const agenticService = require('../../config/agenticService.config'); 
 
 const toIdString = (entry) => String(entry?._id ?? entry);
 
@@ -241,12 +242,9 @@ const DAILY_GENERATION_LIMIT = 10;
 
 // Step 1: AI se questions generate karke DRAFT return karta hai — DB me kuch save nahi hota.
 // Teacher/admin frontend pe review karega, edit/discard karega, phir alag endpoint se accept karega.
-const generateQuestionsWithAI = async (requester, testId, { topic, count, difficulty }) => {
-  await getTestForEdit(requester, testId); // ensures test exists & requester owns it
 
- if (!env.openrouter.apiKey) {
-    throw new ApiError(503, 'AI question generator is not set up yet. Please contact support.');
-  }
+const generateQuestionsWithAI = async (requester, testId, { topic, count, difficulty }) => {
+  const test = await getTestForEdit(requester, testId); // ensures test exists & requester owns it
 
   await aiUsageService.checkAndRecordUsage(
     requester.id,
@@ -255,55 +253,20 @@ const generateQuestionsWithAI = async (requester, testId, { topic, count, diffic
     DAILY_GENERATION_LIMIT
   );
 
-  const safeCount = Math.min(Math.max(count, 1), 10); // hard cap, chahe frontend kuch bhi bheje
-
-  const prompt = `Generate ${safeCount} multiple-choice questions (MCQs) for a school/coaching test.
-Topic: ${topic}
-Difficulty: ${difficulty || 'medium'}
-Respond ONLY with a valid JSON array, no other text, no markdown code fences, in exactly this format:
-[{"questionText": "...", "optionA": "...", "optionB": "...", "optionC": "...", "optionD": "...", "correctAnswer": "A", "topic": "${topic}"}]`;
-
-  let raw;
+  let result;
   try {
-    raw = await gemini.generateContent(prompt, 1500);
+    result = await agenticService.generateQuestions({
+      topic,
+      count,
+      difficulty,
+      instituteId: test.instituteId,
+    });
   } catch (err) {
+    console.error('QUESTION GENERATION ERROR:', err.response?.data || err.message);
     throw new ApiError(503, 'AI question generator is busy right now. Please try again in a moment.');
   }
 
- let parsed;
-  try {
-    let cleaned = raw.replace(/```json|```/g, '').trim();
-
-    // AI kabhi-kabhi JSON se pehle/baad me extra text likh deta hai
-    // ("Here are the questions:" jaisa) — sirf [ ... ] wala hissa nikal lo
-    const firstBracket = cleaned.indexOf('[');
-    const lastBracket = cleaned.lastIndexOf(']');
-    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-      cleaned = cleaned.slice(firstBracket, lastBracket + 1);
-    }
-
-    parsed = JSON.parse(cleaned);
-  } catch (err) {
-    console.error('AI QUESTION GEN — raw response was:', raw); // 👈 TEMP DEBUG
-    throw new ApiError(502, 'AI returned an unexpected format. Please try generating again.');
-  }
-
-  const validOptions = ['A', 'B', 'C', 'D'];
-  // Malformed entries silently drop kar dete hain — poora batch fail karne ke bajaye
-  // jo bhi valid shape me aaya, wahi teacher ko review ke liye dikhta hai
-  const cleanQuestions = (Array.isArray(parsed) ? parsed : [])
-    .filter((q) => q.questionText && q.optionA && q.optionB && q.optionC && q.optionD && validOptions.includes(q.correctAnswer))
-    .map((q) => ({
-      questionText: q.questionText,
-      optionA: q.optionA,
-      optionB: q.optionB,
-      optionC: q.optionC,
-      optionD: q.optionD,
-      correctAnswer: q.correctAnswer,
-      topic: q.topic || topic,
-    }));
-
-  return cleanQuestions;
+  return result.questions;
 };
 
 // Step 2: Teacher ne jo questions review karke accept/edit kiye, unhi ko save karta hai
